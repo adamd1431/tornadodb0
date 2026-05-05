@@ -14,39 +14,6 @@
       min-height: 100vh;
     }
 
-    <div id="guestPopup" style="
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,0.7);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 5000;
-    ">
-      <div style="
-        background: #1f2937;
-        padding: 30px;
-        border-radius: 18px;
-        width: 400px;
-        max-width: 90%;
-        text-align: center;
-        border: 1px solid #374151;
-        box-shadow: 0 20px 60px rgba(0,0,0,0.5);
-      ">
-        <h2 style="margin-top:0;">Browsing as Guest</h2>
-
-        <p style="color:#cbd5e1;">
-          You are currently browsing as a guest.
-          Sign in to upload tornadoes and access account features.
-        </p>
-
-      <div style="display:flex; gap:10px; justify-content:center; margin-top:20px;">
-        <button onclick="location.href='login.html'">Sign In</button>
-        <button onclick="continueGuest()">Continue as Guest</button>
-      </div>
-    </div>
-  </div>
-
     h1 {
       text-align: center;
       font-size: 52px;
@@ -149,6 +116,39 @@
 </head>
 
 <body>
+
+ <div id="guestPopup" style="
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.7);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 5000;
+    ">
+      <div style="
+        background: #1f2937;
+        padding: 30px;
+        border-radius: 18px;
+        width: 400px;
+        max-width: 90%;
+        text-align: center;
+        border: 1px solid #374151;
+        box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+      ">
+        <h2 style="margin-top:0;">Browsing as Guest</h2>
+
+        <p style="color:#cbd5e1;">
+          You are currently browsing as a guest.
+          Sign in to upload tornadoes and access account features.
+        </p>
+
+      <div style="display:flex; gap:10px; justify-content:center; margin-top:20px;">
+        <button onclick="location.href='login.html'">Sign In</button>
+        <button onclick="continueGuest()">Continue as Guest</button>
+      </div>
+    </div>
+  </div>
 
 <div class="nav">
   <button onclick="location.href='admin.html'">Admin</button>
