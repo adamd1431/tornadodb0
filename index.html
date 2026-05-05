@@ -52,10 +52,19 @@
     .nav {
       position: fixed;
       top: 15px;
+      left: 15px;
       right: 15px;
       display: flex;
-      gap: 10px;
+      justify-content: space-between;
       z-index: 999;
+      pointer-events: none; /* allows inner buttons only */
+    }
+
+    .nav-left,
+    .nav-right {
+      display: flex;
+      gap: 10px;
+      pointer-events: auto;
     }
 
     .filters {
@@ -151,8 +160,14 @@
   </div>
 
 <div class="nav">
-  <button onclick="location.href='admin.html'">Admin</button>
-  <button onclick="openForm()">+ Add Tornado</button>
+  <div class="nav-left">
+    <button onclick="location.href='admin.html'">Admin</button>
+    <button onclick="openForm()">+ Add Tornado</button>
+  </div>
+
+  <div class="nav-right">
+    <button onclick="location.href='profile.html'">Profile</button>
+  </div>
 </div>
 
 <h1>🌪 Tornado Database</h1>
