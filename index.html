@@ -1,124 +1,107 @@
 <!DOCTYPE html>
 <html>
 <head>
-<meta charset="UTF-8">
-<title>Tornado Database</title>
+  <meta charset="UTF-8">
+  <title>Tornado Database</title>
 
-<style>
-body {
-  margin: 0;
-  padding: 30px;
-  font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-  background: #0b1220;
-  color: #e5e7eb;
-}
+  <style>
+    body {
+      margin: 0;
+      padding: 25px;
+      font-family: Arial, sans-serif;
+      background: linear-gradient(to bottom, #111827, #1f2937);
+      color: white;
+      min-height: 100vh;
+    }
 
-/* HEADER */
-h1 {
-  text-align: center;
-  font-size: 44px;
-  margin-bottom: 20px;
-  letter-spacing: 1px;
-}
+    h1 {
+      text-align: center;
+      font-size: 46px;
+      margin-bottom: 20px;
+    }
 
-/* TOP NAV */
-.nav {
-  position: fixed;
-  top: 15px;
-  right: 15px;
-  display: flex;
-  gap: 10px;
-}
+    button {
+      background: #2563eb;
+      color: white;
+      border: none;
+      padding: 10px 16px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: bold;
+    }
 
-/* BUTTONS */
-button {
-  background: #1f6feb;
-  color: white;
-  border: none;
-  padding: 10px 14px;
-  border-radius: 10px;
-  cursor: pointer;
-  font-weight: 600;
-  transition: 0.2s ease;
-}
+    button:hover {
+      background: #1d4ed8;
+    }
 
-button:hover {
-  background: #155ac7;
-  transform: translateY(-1px);
-}
+    input, select {
+      padding: 10px;
+      border-radius: 8px;
+      border: 1px solid #4b5563;
+      background: #111827;
+      color: white;
+      box-sizing: border-box;
+    }
 
-/* INPUTS */
-input, select {
-  padding: 10px;
-  border-radius: 10px;
-  border: 1px solid #263042;
-  background: #0f172a;
-  color: #e5e7eb;
-  outline: none;
-}
+    .nav {
+      position: fixed;
+      top: 15px;
+      right: 15px;
+      display: flex;
+      gap: 10px;
+      z-index: 999;
+    }
 
-/* SEARCH */
-.searchBar {
-  width: 100%;
-  max-width: 520px;
-  margin: 0 auto 20px auto;
-  display: block;
-}
+    .filters {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-bottom: 25px;
+      justify-content: center;
+    }
 
-/* FILTERS */
-.filters {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 12px;
-  margin-bottom: 25px;
-}
+    .searchBar {
+      width: 100%;
+      max-width: 500px;
+      margin: 0 auto 20px auto;
+      display: block;
+      font-size: 16px;
+    }
 
-/* CARD */
-.card {
-  background: rgba(255,255,255,0.03);
-  border: 1px solid #1f2937;
-  border-radius: 14px;
-  padding: 18px;
-  margin: 14px auto;
-  max-width: 700px;
-  cursor: pointer;
-  transition: 0.2s ease;
-}
+    .card {
+      background: rgba(255,255,255,0.05);
+      border: 1px solid #374151;
+      border-radius: 14px;
+      padding: 18px;
+      margin: 14px 0;
+      cursor: pointer;
+      transition: 0.2s;
+    }
 
-.card:hover {
-  border-color: #3b82f6;
-  transform: translateY(-2px);
-}
+    .card:hover {
+      transform: translateY(-3px);
+      border-color: #60a5fa;
+    }
 
-/* INTENSITY */
-.rating {
-  color: #fbbf24;
-  font-weight: 700;
-}
+    .formBox {
+      display: none;
+      position: fixed;
+      top: 15%;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #1f2937;
+      border: 1px solid #374151;
+      padding: 25px;
+      border-radius: 14px;
+      width: 350px;
+      z-index: 1000;
+    }
 
-/* FORM */
-.formBox {
-  display: none;
-  position: fixed;
-  top: 15%;
-  left: 50%;
-  transform: translateX(-50%);
-  background: #0f172a;
-  border: 1px solid #1f2937;
-  padding: 22px;
-  border-radius: 14px;
-  width: 360px;
-  z-index: 1000;
-}
-
-/* subtle divider feel */
-hr {
-  border: none;
-  border-top: 1px solid #1f2937;
-  margin: 20px 0;
-}
-</style>
+    .rating {
+      color: #fbbf24;
+      font-weight: bold;
+    }
+  </style>
 </head>
 
 <body>
@@ -130,7 +113,7 @@ hr {
 
 <h1>🌪 Tornado Database</h1>
 
-<input id="searchInput" class="searchBar" placeholder="Search tornadoes..." oninput="applyFilters()" />
+<input id="searchInput" class="searchBar" placeholder="Search..." oninput="applyFilters()" />
 
 <div class="filters">
   <select id="intensityFilter" onchange="applyFilters()">
@@ -155,7 +138,6 @@ hr {
 
 <div id="list">Loading...</div>
 
-<!-- FORM -->
 <div id="formBox" class="formBox">
   <h2>Add Tornado</h2>
 
@@ -177,19 +159,26 @@ import { supabase } from './supabase.js';
 
 let allTornadoes = [];
 
-/* SAFE INTENSITY */
+/* =========================
+   SAFE INTENSITY FORMATTER
+========================= */
 function formatIntensity(i) {
   if (!i) return "Unknown";
+
   if (typeof i === "string") return i;
 
   const scale = i.scale || "";
-  const rating = i.rating ?? "";
+  const rating = (i.rating ?? "").toString();
   const mod = i.modifier || "";
 
-  return `${scale}${rating}${mod}` || "Unknown";
+  const result = `${scale}${rating}${mod}`;
+
+  return result.trim() || "Unknown";
 }
 
-/* SORT VALUE */
+/* =========================
+   SAFE INTENSITY VALUE
+========================= */
 function intensityValue(i) {
   if (!i) return 0;
 
@@ -212,10 +201,15 @@ function intensityValue(i) {
 }
 
 async function loadTornadoes() {
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from("tornadoes")
     .select("*")
     .eq("status", "approved");
+
+  if (error) {
+    document.getElementById("list").innerHTML = error.message;
+    return;
+  }
 
   allTornadoes = data || [];
 
@@ -234,6 +228,12 @@ function populateFilters() {
   document.getElementById("stateFilter").innerHTML =
     '<option value="">All States</option>' +
     states.map(s => `<option>${s}</option>`).join("");
+
+  const intensities = [...new Set(allTornadoes.map(t => formatIntensity(t.intensity)))];
+
+  document.getElementById("intensityFilter").innerHTML =
+    '<option value="">All Intensities</option>' +
+    intensities.map(i => `<option>${i}</option>`).join("");
 }
 
 window.applyFilters = function () {
