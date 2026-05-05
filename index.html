@@ -247,51 +247,86 @@ if (userData.user) {
     .maybeSingle();
 
   if (!profile) {
-    const username = prompt("Choose a username:");
+    document.body.insertAdjacentHTML("beforeend", `
+      <div id="usernamePopup" style="
+        position:fixed;
+        inset:0;
+        background:rgba(0,0,0,0.75);
+        display:flex;
+        justify-content:center;
+        align-items:center;
+        z-index:9999;
+      ">
+        <div style="
+          background:#1f2937;
+          padding:30px;
+          border-radius:16px;
+          width:400px;
+          max-width:90%;
+          text-align:center;
+          border:1px solid #374151;
+        ">
+          <h2>Create Username</h2>
+          <p style="color:#cbd5e1;">
+            You're signed in with Gmail.<br>
+            Choose a unique username to finish setup.
+          </p>
 
-    if (!username) {
-      alert("Username required.");
-    } else {
-      const { data: existing } = await supabase
-        .from("profiles")
-        .select("username")
-        .eq("username", username)
-        .maybeSingle();
+          <input id="newUsername"
+            placeholder="Choose username"
+            style="
+              width:100%;
+              padding:12px;
+              margin-top:12px;
+              border-radius:8px;
+              border:1px solid #374151;
+              background:#111827;
+              color:white;
+              box-sizing:border-box;
+            "
+          >
 
-      if (existing) {
-        alert("Username already taken.");
-      } else {
-        await supabase.from("profiles").insert([{
-          id: userData.user.id,
-          username,
-          email: userData.user.email
-        }]);
-      }
-    }
+          <button onclick="saveUsername()" style="
+            width:100%;
+            margin-top:14px;
+            padding:12px;
+          ">
+            Save Username
+          </button>
+        </div>
+      </div>
+    `);
   }
 }
 
-const { data: userData } = await supabase.auth.getUser();
+window.saveUsername = async function () {
+  const username = document.getElementById("newUsername").value.trim();
 
-if (userData.user) {
-  document.getElementById("guestPopup").style.display = "none";
-  console.log("Logged in as:", userData.user.email);
-}
-
-const { data } = await supabase.auth.getUser();
-
-if (data.user) {
-  const pendingUsername = localStorage.getItem("pendingUsername");
-
-  if (pendingUsername) {
-    await supabase.from("profiles").upsert([{
-      id: data.user.id,
-      username: pendingUsername
-    }]);
-
-    localStorage.removeItem("pendingUsername");
+  if (!username) {
+    alert("Username required.");
+    return;
   }
-}
+
+  const { data: existing } = await supabase
+    .from("profiles")
+    .select("username")
+    .eq("username", username)
+    .maybeSingle();
+
+  if (existing) {
+    alert("Username already taken.");
+    return;
+  }
+
+  await supabase.from("profiles").insert([{
+    id: userData.user.id,
+    username,
+    email: userData.user.email
+  }]);
+
+  document.getElementById("usernamePopup").remove();
+  alert("Username saved!");
+};
 
 let allTornadoes = [];
 
