@@ -66,12 +66,10 @@
   <!-- LOGIN INPUT -->
   <input id="loginInput" placeholder="Email / Username">
 
-  <!-- PASSWORD -->
-  <input id="password" type="password" placeholder="Password">
-
-  <!-- SIGNUP FIELDS -->
+  <!-- SIGNUP ONLY -->
   <input id="username" placeholder="Username" style="display:none;">
   <input id="email" placeholder="Email (optional)" style="display:none;">
+  <input id="password" type="password" placeholder="Password">
 
   <button id="mainBtn" onclick="submit()">Login</button>
   <button onclick="googleLogin()">Sign in with Google</button>
@@ -95,14 +93,17 @@ function switchMode() {
   document.getElementById("mainBtn").innerText =
     mode === "login" ? "Login" : "Sign Up";
 
-  document.getElementById("loginInput").placeholder =
-    mode === "login" ? "Email / Username" : "Not used in signup";
+  document.getElementById("loginInput").style.display =
+    mode === "login" ? "block" : "block";
 
   document.getElementById("username").style.display =
     mode === "signup" ? "block" : "none";
 
   document.getElementById("email").style.display =
     mode === "signup" ? "block" : "none";
+
+  document.getElementById("password").placeholder =
+    "Password";
 
   document.getElementById("toggleText").innerHTML =
     mode === "login"
@@ -116,13 +117,10 @@ window.submit = async function () {
   const loginInput = document.getElementById("loginInput").value;
   const password = document.getElementById("password").value;
 
-  /* ======================
-     LOGIN MODE
-  ====================== */
+  /* LOGIN */
   if (mode === "login") {
     let email = loginInput;
 
-    // If not email, treat as username
     if (!loginInput.includes("@")) {
       const { data: profile } = await supabase
         .from("profiles")
@@ -147,9 +145,7 @@ window.submit = async function () {
     location.href = "index.html";
   }
 
-  /* ======================
-     SIGNUP MODE
-  ====================== */
+  /* SIGNUP */
   if (mode === "signup") {
     const username = document.getElementById("username").value.trim();
     const email = document.getElementById("email").value.trim();
@@ -171,9 +167,7 @@ window.submit = async function () {
 
     if (error) return alert(error.message);
 
-    alert("Signup successful. If email was used, check inbox.");
-
-    // NOTE: username must be saved after auth confirmation in index.js
+    alert("Signup successful. Check email if provided.");
   }
 };
 
