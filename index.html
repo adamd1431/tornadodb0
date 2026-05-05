@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Tornado Database</title>
+
+  <style>
+    body {
+      margin: 0;
+      padding: 25px;
+      font-family: Arial, sans-serif;
+      background: linear-gradient(to bottom, #111827, #1f2937);
+      color: white;
+      min-height: 100vh;
+    }
+
+    h1 {
+      text-align: center;
+      font-size: 46px;
+      margin-bottom: 20px;
+    }
+
+    button {
+      background: #2563eb;
+      color: white;
+      border: none;
+      padding: 10px 16px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    button:hover {
+      background: #1d4ed8;
+    }
+
+    input, select {
+      padding: 10px;
+      border-radius: 8px;
+      border: 1px solid #4b5563;
+      background: #111827;
+      color: white;
+      box-sizing: border-box;
+    }
+
+    .nav {
+      position: fixed;
+      top: 15px;
+      right: 15px;
+      display: flex;
+      gap: 10px;
+      z-index: 999;
+    }
+
+    .filters {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-bottom: 25px;
+      justify-content: center;
+    }
+
+    .searchBar {
+      width: 100%;
+      max-width: 500px;
+      margin: 0 auto 20px auto;
+      display: block;
+      font-size: 16px;
+    }
+
+    .card {
+      background: rgba(255,255,255,0.05);
+      border: 1px solid #374151;
+      border-radius: 14px;
+      padding: 18px;
+      margin: 14px 0;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+
+    .card:hover {
+      transform: translateY(-3px);
+      border-color: #60a5fa;
+    }
+
+    .formBox {
+      display: none;
+      position: fixed;
+      top: 15%;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #1f2937;
+      border: 1px solid #374151;
+      padding: 25px;
+      border-radius: 14px;
+      width: 350px;
+      z-index: 1000;
+    }
+
+    .rating {
+      color: #fbbf24;
+      font-weight: bold;
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="nav">
+  <button onclick="location.href='admin.html'">Admin</button>
+  <button onclick="openForm()">+ Add Tornado</button>
+</div>
+
+<h1>🌪 Tornado Database</h1>
+
+<input
+  id="searchInput"
+  class="searchBar"
+  placeholder="Search tornadoes..."
+  oninput="applyFilters()"
+/>
+
+<div class="filters">
+  <select id="intensityFilter" onchange="applyFilters()">
+    <option value="">All Intensities</option>
+    <option>EF0</option>
+    <option>EF1</option>
+    <option>EF2</option>
+    <option>EF3</option>
+    <option>EF4</option>
+    <option>EF5</option>
+  </select>
+
+  <select id="yearFilter" onchange="applyFilters()">
+    <option value="">All Years</option>
+  </select>
+
+  <select id="stateFilter" onchange="applyFilters()">
+    <option value="">All States</option>
+  </select>
+
+  <select id="sortFilter" onchange="applyFilters()">
+    <option value="newest">Newest</option>
+    <option value="oldest">Oldest</option>
+    <option value="strongest">Strongest</option>
+    <option value="weakest">Weakest</option>
+  </select>
+</div>
+
+<div id="list">Loading...</div>
+
+<div id="formBox" class="formBox">
+  <h2>Add Tornado</h2>
+
+  <input id="name" placeholder="Name"><br><br>
+  <input id="state" placeholder="State"><br><br>
+  <input id="date" type="date"><br><br>
+
+  <select id="intensity">
+    <option>EF0</option>
+    <option>EF1</option>
+    <option>EF2</option>
+    <option>EF3</option>
+    <option>EF4</option>
+    <option>EF5</option>
+  </select>
+  <br><br>
+
+  <button onclick="createTornado()">Submit</button>
+  <button onclick="closeForm()">Cancel</button>
+</div>
+
+<script type="module">
+import { supabase } from './supabase.js';
+
+let allTornadoes = [];
+
+async function loadTornadoes() {
+  const { data, error } = await supabase
+    .from("tornadoes")
+    .select("*")
+    .eq("status", "approved");
+
+  if (error) {
+    document.getElementById("list").innerHTML = error.message;
+    return;
+  }
+
+  allTornadoes = data || [];
+
+  populateFilters();
+  applyFilters();
+}
+
+function populateFilters() {
+  const years = [...new Set(
+    allTornadoes.map(t => t.date?.split("-")[0]).filter(Boolean)
+  )].sort((a, b) => b - a);
+
+  const states = [...new Set(
+    allTornadoes.map(t => t.state).filter(Boolean)
+  )].sort();
+
+  document.getElementById("yearFilter").innerHTML =
+    '<option value="">All Years</option>' +
+    years.map(y => `<option>${y}</option>`).join("");
+
+  document.getElementById("stateFilter").innerHTML =
+    '<option value="">All States</option>' +
+    states.map(s => `<option>${s}</option>`).join("");
+}
+
+function intensityValue(i) {
+  return parseInt((i || "EF0").replace("EF", ""));
+}
+
+window.applyFilters = function() {
+  let filtered = [...allTornadoes];
+
+  const search = document.getElementById("searchInput").value.toLowerCase().trim();
+  const intensity = document.getElementById("intensityFilter").value;
+  const year = document.getElementById("yearFilter").value;
+  const state = document.getElementById("stateFilter").value;
+  const sort = document.getElementById("sortFilter").value;
+
+  filtered = filtered.filter(t => {
+    const matchesSearch =
+      (t.name || "").toLowerCase().includes(search) ||
+      (t.state || "").toLowerCase().includes(search) ||
+      (t.intensity || "").toLowerCase().includes(search) ||
+      (t.date || "").toLowerCase().includes(search);
+
+    const matchesIntensity = !intensity || t.intensity === intensity;
+    const matchesYear = !year || t.date?.startsWith(year);
+    const matchesState = !state || t.state === state;
+
+    return matchesSearch && matchesIntensity && matchesYear && matchesState;
+  });
+
+  if (sort === "newest") {
+    filtered.sort((a, b) => new Date(b.date) - new Date(a.date));
+  }
+
+  if (sort === "oldest") {
+    filtered.sort((a, b) => new Date(a.date) - new Date(b.date));
+  }
+
+  if (sort === "strongest") {
+    filtered.sort((a, b) => intensityValue(b.intensity) - intensityValue(a.intensity));
+  }
+
+  if (sort === "weakest") {
+    filtered.sort((a, b) => intensityValue(a.intensity) - intensityValue(b.intensity));
+  }
+
+  renderTornadoes(filtered);
+};
+
+function renderTornadoes(data) {
+  if (!data.length) {
+    document.getElementById("list").innerHTML = "No tornadoes found.";
+    return;
+  }
+
+  document.getElementById("list").innerHTML = data.map(t => `
+    <div class="card" onclick="openTornado('${t.id}')">
+      <h2>${t.name}</h2>
+      <p><b>State:</b> ${t.state || "N/A"}</p>
+      <p><b>Date:</b> ${t.date || "N/A"}</p>
+      <p><b>Intensity:</b> <span class="rating">${t.intensity}</span></p>
+    </div>
+  `).join("");
+}
+
+window.openTornado = function(id) {
+  location.href = 'tornado.html?id=' + id;
+};
+
+window.openForm = function() {
+  document.getElementById("formBox").style.display = "block";
+};
+
+window.closeForm = function() {
+  document.getElementById("formBox").style.display = "none";
+};
+
+window.createTornado = async function() {
+  const name = document.getElementById("name").value.trim();
+  const state = document.getElementById("state").value.trim();
+  const date = document.getElementById("date").value;
+  const intensity = document.getElementById("intensity").value;
+
+  if (!name || !state || !date) {
+    alert("Fill everything out.");
+    return;
+  }
+
+  await supabase.from("tornadoes").insert([{
+    name,
+    state,
+    date,
+    intensity,
+    status: "pending"
+  }]);
+
+  alert("Submitted for approval!");
+
+  closeForm();
+};
+
+loadTornadoes();
+</script>
+
+</body>
+</html>

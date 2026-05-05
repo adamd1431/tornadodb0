@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Tornado Details</title>
+
+  <style>
+    body {
+      margin: 0;
+      padding: 25px;
+      font-family: Arial, sans-serif;
+      background: linear-gradient(to bottom, #111827, #1f2937);
+      color: white;
+      min-height: 100vh;
+    }
+
+    h1 {
+      text-align: center;
+      font-size: 42px;
+      margin-bottom: 25px;
+    }
+
+    button {
+      background: #2563eb;
+      color: white;
+      border: none;
+      padding: 10px 16px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: 0.2s;
+    }
+
+    button:hover {
+      background: #1d4ed8;
+    }
+
+    input, textarea {
+      width: 100%;
+      padding: 10px;
+      border-radius: 8px;
+      border: 1px solid #4b5563;
+      background: #111827;
+      color: white;
+      box-sizing: border-box;
+      margin-top: 8px;
+    }
+
+    textarea {
+      min-height: 120px;
+    }
+
+    .topNav {
+      position: fixed;
+      top: 15px;
+      right: 15px;
+      z-index: 999;
+    }
+
+    .card {
+      background: rgba(255,255,255,0.05);
+      border: 1px solid #374151;
+      border-radius: 14px;
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+
+    .tabs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    .tab {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid #374151;
+      border-radius: 14px;
+      padding: 20px;
+    }
+
+    img {
+      max-width: 250px;
+      border-radius: 10px;
+      margin: 8px;
+    }
+
+    a {
+      color: #93c5fd;
+      word-break: break-word;
+    }
+
+    .pendingBox {
+      margin-top: 15px;
+      padding: 10px;
+      border: 1px dashed #fbbf24;
+      border-radius: 10px;
+    }
+
+    .meta {
+      margin-bottom: 15px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid #374151;
+    }
+
+    .rating {
+      color: #fbbf24;
+      font-weight: bold;
+    }
+  </style>
+</head>
+
+<body>
+
+<!-- HOME -->
+<div class="topNav">
+  <button onclick="location.href='index.html'">⬅ Home</button>
+</div>
+
+<h1 id="title">Loading...</h1>
+
+<!-- SUMMARY -->
+<div id="summaryBox" class="card">
+  Loading summary...
+</div>
+
+<!-- TABS -->
+<div class="tabs">
+  <button onclick="showTab('sources')">Sources</button>
+  <button onclick="showTab('tornado_pics')">Tornado Pics</button>
+  <button onclick="showTab('damage')">Damage</button>
+  <button onclick="showTab('radar')">Radar</button>
+  <button onclick="showTab('research')">Research</button>
+  <button onclick="showTab('misc')">Misc</button>
+</div>
+
+<!-- CONTENT -->
+<div id="tabContainer">
+
+  <div id="sources" class="tab">
+    <h3>Sources</h3>
+    <input id="sourceLink">
+    <button onclick="uploadSource()">Add</button>
+    <div id="sourcesContent"></div>
+  </div>
+
+  <div id="tornado_pics" class="tab" style="display:none;">
+    <h3>Tornado Pictures</h3>
+    <input type="file" multiple onchange="uploadFiles(this,'photos')">
+    <div id="tornado_picsContent"></div>
+  </div>
+
+  <div id="damage" class="tab" style="display:none;">
+    <h3>Damage</h3>
+    <input type="file" multiple onchange="uploadFiles(this,'damage')">
+    <div id="damageContent"></div>
+  </div>
+
+  <div id="radar" class="tab" style="display:none;">
+    <h3>Radar</h3>
+    <input type="file" multiple onchange="uploadFiles(this,'radar')">
+    <div id="radarContent"></div>
+  </div>
+
+  <div id="research" class="tab" style="display:none;">
+    <h3>Research</h3>
+    <input type="file" multiple onchange="uploadFiles(this,'research')">
+    <div id="researchContent"></div>
+  </div>
+
+  <div id="misc" class="tab" style="display:none;">
+    <h3>Misc</h3>
+    <input type="file" multiple onchange="uploadFiles(this,'misc')">
+    <div id="miscContent"></div>
+  </div>
+
+</div>
+
+<script type="module">
+import { supabase } from './supabase.js';
+
+const id = new URLSearchParams(window.location.search).get("id");
+
+if (!id) {
+  document.getElementById("title").innerText = "No tornado selected";
+  throw new Error("Missing ID");
+}
+
+// TAB SWITCH
+window.showTab = function(tab) {
+  document.querySelectorAll(".tab").forEach(t => t.style.display = "none");
+  document.getElementById(tab).style.display = "block";
+};
+
+// FILE UPLOAD
+window.uploadFiles = async function(input, category) {
+  for (let file of input.files) {
+    const path = `${Date.now()}-${file.name}`;
+
+    await supabase.storage.from("uploads").upload(path, file);
+
+    const { data } = supabase.storage.from("uploads").getPublicUrl(path);
+
+    await supabase.from("uploads").insert({
+      tornado_id: id,
+      category,
+      file_url: data.publicUrl,
+      status: "pending"
+    });
+  }
+
+  alert("Uploaded (pending approval)");
+};
+
+// SOURCE
+window.uploadSource = async function() {
+  const link = document.getElementById("sourceLink").value.trim();
+  if (!link) return;
+
+  await supabase.from("uploads").insert({
+    tornado_id: id,
+    category: "sources",
+    file_url: link,
+    status: "pending"
+  });
+
+  alert("Source submitted");
+};
+
+// SUBMIT SUMMARY (PENDING)
+window.submitSummary = async function() {
+  const summary = document.getElementById("summaryInput").value.trim();
+
+  if (!summary) return;
+
+  await supabase
+    .from("tornadoes")
+    .update({ pending_description: summary })
+    .eq("id", id);
+
+  alert("Summary sent for approval!");
+  document.getElementById("summaryInput").value = "";
+};
+
+// LOAD TORNADO
+async function loadTornado() {
+  const { data } = await supabase
+    .from("tornadoes")
+    .select("*")
+    .eq("id", id)
+    .single();
+
+  document.getElementById("title").innerText = data.name;
+
+  document.getElementById("summaryBox").innerHTML = `
+    <h3>🌪 Tornado Information</h3>
+
+    <div class="meta">
+      <p><b>State:</b> ${data.state || data.town || "N/A"}</p>
+      <p><b>Date:</b> ${data.date || "N/A"}</p>
+      <p><b>Rating:</b> <span class="rating">${data.intensity || "N/A"}</span></p>
+    </div>
+
+    <h3>Summary</h3>
+
+    <p>${data.description || "No approved summary yet."}</p>
+
+    ${data.pending_description ? `
+      <div class="pendingBox">
+        <b>Pending Summary:</b>
+        <p>${data.pending_description}</p>
+        <small style="color:#fbbf24;">Awaiting admin approval</small>
+      </div>
+    ` : ""}
+
+    <h4 style="margin-top:20px;">Add Summary</h4>
+    <textarea id="summaryInput"></textarea>
+    <button onclick="submitSummary()">Submit</button>
+  `;
+
+  loadUploads();
+}
+
+// LOAD UPLOADS
+async function loadUploads() {
+  const { data } = await supabase
+    .from("uploads")
+    .select("*")
+    .eq("tornado_id", id)
+    .eq("status", "approved");
+
+  const map = {
+    sources: "sources",
+    tornado_pics: "photos",
+    damage: "damage",
+    radar: "radar",
+    research: "research",
+    misc: "misc"
+  };
+
+  for (let [tab, cat] of Object.entries(map)) {
+    const el = document.getElementById(tab + "Content");
+    if (!el) continue;
+
+    const items = data.filter(i => i.category === cat);
+
+    el.innerHTML = items.length ? "" : "<p>No uploads</p>";
+
+    items.forEach(i => {
+      if (tab === "sources") {
+        el.innerHTML += `<a href="${i.file_url}" target="_blank">${i.file_url}</a><br>`;
+      } else {
+        el.innerHTML += `<img src="${i.file_url}">`;
+      }
+    });
+  }
+}
+
+loadTornado();
+</script>
+
+</body>
+</html>
