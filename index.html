@@ -9,38 +9,50 @@
       margin: 0;
       padding: 25px;
       font-family: Arial, sans-serif;
-      background: linear-gradient(to bottom, #111827, #1f2937);
+      background: radial-gradient(circle at top, #111827, #0b1220);
       color: white;
       min-height: 100vh;
     }
 
     h1 {
       text-align: center;
-      font-size: 46px;
+      font-size: 52px;
       margin-bottom: 20px;
+      letter-spacing: 1px;
+      text-shadow: 0 0 20px rgba(59,130,246,0.4);
     }
 
     button {
-      background: #2563eb;
+      background: linear-gradient(135deg, #3b82f6, #2563eb);
       color: white;
       border: none;
       padding: 10px 16px;
-      border-radius: 8px;
+      border-radius: 10px;
       cursor: pointer;
       font-weight: bold;
+      box-shadow: 0 8px 20px rgba(37,99,235,0.25);
+      transition: 0.2s ease;
     }
 
     button:hover {
-      background: #1d4ed8;
+      transform: translateY(-2px);
+      box-shadow: 0 10px 25px rgba(37,99,235,0.4);
     }
 
     input, select {
       padding: 10px;
-      border-radius: 8px;
-      border: 1px solid #4b5563;
-      background: #111827;
+      border-radius: 10px;
+      border: 1px solid #374151;
+      background: rgba(17,24,39,0.8);
       color: white;
       box-sizing: border-box;
+      outline: none;
+      transition: 0.2s;
+    }
+
+    input:focus, select:focus {
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 3px rgba(59,130,246,0.2);
     }
 
     .nav {
@@ -58,29 +70,37 @@
       gap: 12px;
       margin-bottom: 25px;
       justify-content: center;
+      padding: 10px;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid #1f2937;
+      border-radius: 14px;
+      backdrop-filter: blur(10px);
     }
 
     .searchBar {
       width: 100%;
-      max-width: 500px;
+      max-width: 520px;
       margin: 0 auto 20px auto;
       display: block;
       font-size: 16px;
+      border-radius: 12px;
     }
 
     .card {
-      background: rgba(255,255,255,0.05);
-      border: 1px solid #374151;
-      border-radius: 14px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 16px;
       padding: 18px;
       margin: 14px 0;
       cursor: pointer;
-      transition: 0.2s;
+      transition: 0.25s ease;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.2);
     }
 
     .card:hover {
-      transform: translateY(-3px);
-      border-color: #60a5fa;
+      transform: translateY(-5px) scale(1.01);
+      border-color: #3b82f6;
+      box-shadow: 0 15px 35px rgba(59,130,246,0.25);
     }
 
     .formBox {
@@ -89,17 +109,20 @@
       top: 15%;
       left: 50%;
       transform: translateX(-50%);
-      background: #1f2937;
+      background: rgba(31,41,55,0.95);
       border: 1px solid #374151;
       padding: 25px;
-      border-radius: 14px;
-      width: 350px;
+      border-radius: 16px;
+      width: 360px;
       z-index: 1000;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+      backdrop-filter: blur(10px);
     }
 
     .rating {
       color: #fbbf24;
       font-weight: bold;
+      text-shadow: 0 0 10px rgba(251,191,36,0.3);
     }
   </style>
 </head>
@@ -159,60 +182,30 @@ import { supabase } from './supabase.js';
 
 let allTornadoes = [];
 
-/* =========================
-   SAFE INTENSITY FORMATTER
-========================= */
 function formatIntensity(i) {
   if (!i) return "Unknown";
-
   if (typeof i === "string") return i;
-
-  const scale = i.scale || "";
-  const rating = (i.rating ?? "").toString();
-  const mod = i.modifier || "";
-
-  const result = `${scale}${rating}${mod}`;
-
-  return result.trim() || "Unknown";
+  return `${i.scale || ""}${i.rating ?? ""}${i.modifier || ""}`;
 }
 
-/* =========================
-   SAFE INTENSITY VALUE
-========================= */
 function intensityValue(i) {
   if (!i) return 0;
+  if (typeof i === "string") return parseInt(i.replace(/\D/g, "")) || 0;
 
-  if (typeof i === "string") {
-    return parseInt(i.replace(/\D/g, "")) || 0;
-  }
-
-  const base =
-    i.scale === "EF" ? 0 :
-    i.scale === "F" ? 100 :
-    i.scale === "IF" ? 200 : 0;
-
-  const rating = Number(i.rating || 0);
-
-  const mod =
-    i.modifier === "+" ? 0.3 :
-    i.modifier === "-" ? -0.3 : 0;
-
-  return base + rating + mod;
+  return (i.scale === "EF" ? 0 :
+          i.scale === "F" ? 100 :
+          i.scale === "IF" ? 200 : 0)
+          + (i.rating || 0)
+          + (i.modifier === "+" ? 0.3 : i.modifier === "-" ? -0.3 : 0);
 }
 
 async function loadTornadoes() {
-  const { data, error } = await supabase
+  const { data } = await supabase
     .from("tornadoes")
     .select("*")
     .eq("status", "approved");
 
-  if (error) {
-    document.getElementById("list").innerHTML = error.message;
-    return;
-  }
-
   allTornadoes = data || [];
-
   populateFilters();
   applyFilters();
 }
@@ -229,11 +222,10 @@ function populateFilters() {
     '<option value="">All States</option>' +
     states.map(s => `<option>${s}</option>`).join("");
 
-  const intensities = [...new Set(allTornadoes.map(t => formatIntensity(t.intensity)))];
-
   document.getElementById("intensityFilter").innerHTML =
     '<option value="">All Intensities</option>' +
-    intensities.map(i => `<option>${i}</option>`).join("");
+    [...new Set(allTornadoes.map(t => formatIntensity(t.intensity)))]
+      .map(i => `<option>${i}</option>`).join("");
 }
 
 window.applyFilters = function () {
@@ -246,20 +238,12 @@ window.applyFilters = function () {
   const sort = document.getElementById("sortFilter").value;
 
   filtered = filtered.filter(t => {
-    const matchSearch =
-      (t.name || "").toLowerCase().includes(search) ||
-      (t.state || "").toLowerCase().includes(search);
-
-    const matchIntensity =
-      !intensity || formatIntensity(t.intensity) === intensity;
-
-    const matchYear =
-      !year || t.date?.startsWith(year);
-
-    const matchState =
-      !state || t.state === state;
-
-    return matchSearch && matchIntensity && matchYear && matchState;
+    return (
+      (!search || (t.name||"").toLowerCase().includes(search) || (t.state||"").toLowerCase().includes(search)) &&
+      (!intensity || formatIntensity(t.intensity) === intensity) &&
+      (!year || t.date?.startsWith(year)) &&
+      (!state || t.state === state)
+    );
   });
 
   if (sort === "newest") filtered.sort((a,b)=>new Date(b.date)-new Date(a.date));
@@ -289,11 +273,7 @@ window.createTornado = async function () {
   const intensity = document.getElementById("intensity").value;
 
   await supabase.from("tornadoes").insert([{
-    name,
-    state,
-    date,
-    intensity,
-    status: "pending"
+    name, state, date, intensity, status: "pending"
   }]);
 
   alert("Submitted!");
