@@ -63,13 +63,17 @@
 <div class="box">
   <h2 id="title">Login</h2>
 
-  <input id="email" placeholder="Email">
+  <!-- LOGIN INPUT -->
+  <input id="loginInput" placeholder="Email / Username">
+
+  <!-- PASSWORD -->
   <input id="password" type="password" placeholder="Password">
 
-  <!-- ONLY SHOW THIS IN SIGNUP MODE -->
+  <!-- SIGNUP FIELDS -->
   <input id="username" placeholder="Username" style="display:none;">
+  <input id="email" placeholder="Email (optional)" style="display:none;">
 
-  <button id="mainBtn" onclick="login()">Login</button>
+  <button id="mainBtn" onclick="submit()">Login</button>
   <button onclick="googleLogin()">Sign in with Google</button>
 
   <div class="link" id="toggleText">
@@ -80,7 +84,7 @@
 <script type="module">
 import { supabase } from './supabase.js';
 
-let mode = "login"; // login or signup
+let mode = "login";
 
 function switchMode() {
   mode = mode === "login" ? "signup" : "login";
@@ -91,7 +95,13 @@ function switchMode() {
   document.getElementById("mainBtn").innerText =
     mode === "login" ? "Login" : "Sign Up";
 
+  document.getElementById("loginInput").placeholder =
+    mode === "login" ? "Email / Username" : "Not used in signup";
+
   document.getElementById("username").style.display =
+    mode === "signup" ? "block" : "none";
+
+  document.getElementById("email").style.display =
     mode === "signup" ? "block" : "none";
 
   document.getElementById("toggleText").innerHTML =
@@ -102,11 +112,31 @@ function switchMode() {
 
 window.switchMode = switchMode;
 
-window.login = async function () {
-  const email = document.getElementById("email").value;
+window.submit = async function () {
+  const loginInput = document.getElementById("loginInput").value;
   const password = document.getElementById("password").value;
 
+  /* ======================
+     LOGIN MODE
+  ====================== */
   if (mode === "login") {
+    let email = loginInput;
+
+    // If not email, treat as username
+    if (!loginInput.includes("@")) {
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("email")
+        .eq("username", loginInput)
+        .maybeSingle();
+
+      if (!profile?.email) {
+        return alert("No account found with that username");
+      }
+
+      email = profile.email;
+    }
+
     const { error } = await supabase.auth.signInWithPassword({
       email,
       password
@@ -117,8 +147,12 @@ window.login = async function () {
     location.href = "index.html";
   }
 
+  /* ======================
+     SIGNUP MODE
+  ====================== */
   if (mode === "signup") {
-    const username = document.getElementById("username").value;
+    const username = document.getElementById("username").value.trim();
+    const email = document.getElementById("email").value.trim();
 
     if (!username) return alert("Username required");
 
@@ -131,13 +165,15 @@ window.login = async function () {
     if (existing) return alert("Username already taken");
 
     const { error } = await supabase.auth.signUp({
-      email,
+      email: email || undefined,
       password
     });
 
     if (error) return alert(error.message);
 
-    alert("Check your email to confirm signup, then choose username.");
+    alert("Signup successful. If email was used, check inbox.");
+
+    // NOTE: username must be saved after auth confirmation in index.js
   }
 };
 
