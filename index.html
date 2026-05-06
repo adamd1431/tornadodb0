@@ -240,101 +240,76 @@ import { supabase } from './supabase.js';
 let currentUser = null;
 
 async function initAuth() {
+  const { data: { user } } = await supabase.auth.getUser();
+
   const guestPopup = document.getElementById("guestPopup");
 
-  const { data } = await supabase.auth.getUser();
-  currentUser = data.user;
-
-  if (currentUser) {
-    guestPopup.style.display = "none";
-  } else {
+  if (!user) {
     guestPopup.style.display = "flex";
     return;
   }
 
+  // logged in → hide guest popup
+  guestPopup.style.display = "none";
+
   const { data: profile } = await supabase
     .from("profiles")
-    .select("*")
-    .eq("id", currentUser.id)
+    .select("username")
+    .eq("id", user.id)
     .maybeSingle();
 
   if (!profile) {
-    document.querySelector(".nav").style.display = "none";
-    document.getElementById("list").style.display = "none";
-    document.querySelector(".filters").style.display = "none";
-    document.getElementById("searchInput").style.display = "none";
-
-    document.body.insertAdjacentHTML("beforeend", `
-      <div id="usernamePopup" style="
-        position:fixed;
-        inset:0;
-        background:rgba(0,0,0,0.75);
-        display:flex;
-        justify-content:center;
-        align-items:center;
-        z-index:9999;
-	pointer-events: all;
-      ">
-        <div style="
-          background:#1f2937;
-          padding:30px;
-          border-radius:16px;
-          width:400px;
-          max-width:90%;
-          text-align:center;
-          border:1px solid #374151;
-        ">
-          <h2>Create Username</h2>
-
-          <p style="color:#cbd5e1;">
-            Choose a username to finish setup.
-          </p>
-
-          <input
-            id="newUsername"
-            placeholder="Choose username"
-            style="width:100%;padding:12px;margin-top:12px;border-radius:8px;border:1px solid #374151;background:#111827;color:white;box-sizing:border-box;"
-          />
-
-          <button onclick="saveUsername()" style="width:100%;margin-top:14px;padding:12px;">
-            Save Username
-          </button>
-        </div>
-      </div>
-    `);
+    showUsernamePopup(user);
   }
 }
 
-window.saveUsername = async function () {
-  const input = document.getElementById("newUsername");
+function showUsernamePopup(user) {
+  if (document.getElementById("usernamePopup")) return;
 
-  if (!input) {
-    alert("Input not found (popup not loaded properly).");
-    return;
-  }
+  document.body.insertAdjacentHTML("beforeend", `
+    <div id="usernamePopup" style="
+      position:fixed;
+      inset:0;
+      background:rgba(0,0,0,0.75);
+      display:flex;
+      justify-content:center;
+      align-items:center;
+      z-index:9999;
+    ">
+      <div style="
+        background:#1f2937;
+        padding:30px;
+        border-radius:16px;
+        width:400px;
+        text-align:center;
+      ">
+        <h2>Create Username</h2>
 
-  const username = input.value.trim();
+        <input
+          id="newUsername"
+          placeholder="Choose username"
+          style="width:100%;padding:12px;margin-top:12px;border-radius:8px;background:#111827;color:white;"
+        />
 
-  if (username.length === 0) {
+        <button onclick="saveUsername('${user.id}')" style="width:100%;margin-top:14px;padding:12px;">
+          Save Username
+        </button>
+      </div>
+    </div>
+  `);
+}
+
+window.saveUsername = async function (userId) {
+  const username = document.getElementById("newUsername").value.trim();
+
+  if (!username) {
     alert("Username required.");
     return;
   }
 
-  const { data: existing } = await supabase
-    .from("profiles")
-    .select("username")
-    .eq("username", username)
-    .maybeSingle();
-
-  if (existing) {
-    alert("Username already taken.");
-    return;
-  }
-
   const { error } = await supabase.from("profiles").insert([{
-    id: currentUser.id,
-    username,
-    email: currentUser.email ?? null
+    id: userId,
+    username
   }]);
 
   if (error) {
@@ -343,7 +318,7 @@ window.saveUsername = async function () {
   }
 
   document.getElementById("usernamePopup").remove();
-  alert("Username saved!");
+  initAuth();
 };
 
 let allTornadoes = [];
@@ -484,8 +459,12 @@ window.createTornado = async function () {
 };
 
 loadTornadoes();
-
 initAuth();
+
+supabase.auth.onAuthStateChange(() => {
+  initAuth();
+});
+
 </script>
 
 </body>
