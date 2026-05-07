@@ -411,7 +411,7 @@ async function loadTornadoes() {
 
 function populateFilters() {
   const years = [...new Set(allTornadoes.map(t => t.date?.split("-")[0]))].filter(Boolean);
-  const states = [...new Set(allTornadoes.map(t => t.state))].filter(Boolean);
+  const states = [...new Set(allTornadoes.flatMap(t => t.states || []))].filter(Boolean);
 
   document.getElementById("yearFilter").innerHTML =
     '<option value="">All Years</option>' +
@@ -445,7 +445,7 @@ window.applyFilters = function () {
       (!search || (t.name||"").toLowerCase().includes(search) || (t.state||"").toLowerCase().includes(search)) &&
       (!intensity || formatIntensity(t.intensity) === intensity) &&
       (!year || t.date?.startsWith(year)) &&
-      (!state || t.state === state)
+      (!state || (t.states || []).includes(state))
     );
   });
 
@@ -457,7 +457,10 @@ window.applyFilters = function () {
   document.getElementById("list").innerHTML = filtered.map(t => `
     <div class="card" onclick="openTornado('${t.id}')">
       <h2>${t.name}</h2>
-      <p><b>State:</b> ${t.state || "N/A"}</p>
+      <p>
+        <b>States:</b>
+        ${(t.states || []).join(" - ") || "N/A"}
+      </p>
       <p><b>Date:</b> ${t.date || "N/A"}</p>
       <p>
         <b>Intensity:</b>
@@ -496,7 +499,11 @@ window.createTornado = async function () {
   const intensity = document.getElementById("intensity").value;
 
   await supabase.from("tornadoes").insert([{
-    name, state, date, intensity, status: "pending"
+    name,
+    states: state.split("-").map(s => s.trim()),
+    date,
+    intensity,
+    status: "pending"
   }]);
 
   alert("Submitted!");
