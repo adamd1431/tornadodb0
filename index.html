@@ -512,16 +512,19 @@ window.createTornado = async function () {
   const date = document.getElementById("date").value;
   const intensity = document.getElementById("intensity").value;
 
-  await supabase.from("tornadoes").insert([{
+  aconst { error } = await supabase.from("tornadoes").insert([{
     name,
-    states: state
-      .split("-")
-      .map(s => s.trim())
-      .filter(Boolean),
+    states: state.split("-").map(s => s.trim().toUpperCase()),
     date,
     intensity,
     status: "pending"
   }]);
+
+  if (error) {
+    console.error(error);
+    alert("Error: " + error.message);
+    return;
+  }
 
   alert("Submitted!");
   closeForm();
