@@ -122,7 +122,7 @@
 
 <!-- TABS -->
 <div class="tabs">
-  <button onclick="showTab('sources')">Sources</button>
+  <button onclick="showTab('writeups')">Writeups</button>
   <button onclick="showTab('tornado_pics')">Tornado Pics</button>
   <button onclick="showTab('damage')">Damage</button>
   <button onclick="showTab('radar')">Radar</button>
@@ -133,11 +133,11 @@
 <!-- CONTENT -->
 <div id="tabContainer">
 
-  <div id="sources" class="tab">
-    <h3>Sources</h3>
-    <input id="sourceLink">
+  <div id="writeups" class="tab">
+    <h3>Writeups</h3>
+    <input id="writeupLink">
     <button onclick="uploadSource()">Add</button>
-    <div id="sourcesContent"></div>
+    <div id="writeupsContent"></div>
   </div>
 
   <div id="tornado_pics" class="tab" style="display:none;">
@@ -243,12 +243,12 @@ window.uploadSource = async function() {
 
   await supabase.from("uploads").insert({
     tornado_id: id,
-    category: "sources",
+    category: "writeups",
     file_url: link,
     status: "pending"
   });
 
-  alert("Source submitted");
+  alert("Writeup submitted");
 };
 
 // LOAD TORNADO
@@ -282,6 +282,8 @@ async function loadTornado() {
     <h3>Summary</h3>
     <p>${data.description || "No approved summary yet."}</p>
 
+    <div id="writeupsBox" style="margin-top:15px;"></div>
+
     ${data.pending_description ? `
       <div class="pendingBox">
         <b>Pending Summary:</b>
@@ -292,6 +294,7 @@ async function loadTornado() {
   `;
 
   loadUploads();
+  loadWriteups(id);
 }
 
 // LOAD UPLOADS
@@ -305,7 +308,7 @@ async function loadUploads() {
   const safeData = data || [];
 
   const map = {
-    sources: "sources",
+    writeups: "writeups",
     tornado_pics: "photos",
     damage: "damage",
     radar: "radar",
@@ -322,13 +325,45 @@ async function loadUploads() {
     el.innerHTML = items.length ? "" : "<p>No uploads</p>";
 
     items.forEach(i => {
-      if (tab === "sources") {
+      if (tab === "writeups") {
         el.innerHTML += `<a href="${i.file_url}" target="_blank">${i.file_url}</a><br>`;
       } else {
         el.innerHTML += `<img src="${i.file_url}">`;
       }
     });
   });
+}
+
+async function loadWriteups(tornadoId) {
+  const { data, error } = await supabase
+    .from("uploads")
+    .select("*")
+    .eq("tornado_id", tornadoId)
+    .eq("category", "writeups")
+    .eq("status", "approved");
+
+  if (error) {
+    console.error(error);
+    return;
+  }
+
+  const box = document.getElementById("writeupsBox");
+
+  if (!data || data.length === 0) {
+    box.innerHTML = "<b>Writeups:</b> None";
+    return;
+  }
+
+  box.innerHTML = `
+    <h3>Writeups</h3>
+    ${data.map(w => `
+      <p>
+        <a href="${w.file_url}" target="_blank" style="color:#60a5fa;">
+          ${w.file_url}
+        </a>
+      </p>
+    `).join("")}
+  `;
 }
 
 window.addEventListener("DOMContentLoaded", loadTornado);
