@@ -323,6 +323,21 @@ window.saveUsername = async function (userId) {
 
 let allTornadoes = [];
 
+function getEFColor(intensity) {
+  if (!intensity) return "#9ca3af";
+
+  const i = intensity.toString();
+
+  if (i.includes("EF5")) return "#8E44AD";
+  if (i.includes("EF4")) return "#FF3B30";
+  if (i.includes("EF3")) return "#FF8C42";
+  if (i.includes("EF2")) return "#FFD34E";
+  if (i.includes("EF1")) return "#C9E265";
+  if (i.includes("EF0")) return "#7ED957";
+
+  return "#9ca3af";
+}
+
 /* =========================
    FIXED INTENSITY HANDLER
 ========================= */
@@ -421,7 +436,12 @@ window.applyFilters = function () {
       <h2>${t.name}</h2>
       <p><b>State:</b> ${t.state || "N/A"}</p>
       <p><b>Date:</b> ${t.date || "N/A"}</p>
-      <p><b>Intensity:</b> <span class="rating">${formatIntensity(t.intensity)}</span></p>
+      <p>
+        <b>Intensity:</b>
+        <span style="color:${getEFColor(t.intensity)}; font-weight:bold;">
+          ${formatIntensity(t.intensity)}
+        </span>
+      </p>
     </div>
   `).join("");
 };
