@@ -328,44 +328,29 @@ function getEFColor(intensity) {
 
   const i = intensity.toString().toUpperCase();
 
-  // =========================
-  // UNIFIED SCALE COLORS (EF base)
-  // =========================
   const colors = {
-    0: "#7ED957",  // EF0
-    1: "#C9E265",  // EF1
-    2: "#FFD34E",  // EF2
-    3: "#FF8C42",  // EF3
-    4: "#FF0000",  // EF4 (pure red)
-    5: "#8E44AD"   // EF5
+    0: "#7ED957",
+    1: "#C9E265",
+    2: "#FFD34E",
+    3: "#FF8C42",
+    4: "#FF1A1A",   // stronger red EF4
+    5: "#8E44AD"
   };
 
-  function getEF(num) {
+  function get(num) {
     return colors[num] || "#9ca3af";
   }
 
-  // =========================
-  // EF SCALE
-  // =========================
   if (i.includes("EF")) {
-    const n = parseInt(i.replace(/\D/g, ""));
-    return getEF(n);
+    return get(parseInt(i.replace(/\D/g, "")));
   }
 
-  // =========================
-  // F SCALE (mapped to EF colors)
-  // =========================
   if (i.includes("F")) {
-    const n = parseInt(i.replace(/\D/g, ""));
-    return getEF(n);
+    return get(parseInt(i.replace(/\D/g, "")));
   }
 
-  // =========================
-  // IF SCALE (also mapped to EF colors)
-  // =========================
   if (i.includes("IF")) {
-    const n = parseInt(i.replace(/\D/g, ""));
-    return getEF(n);
+    return get(parseInt(i.replace(/\D/g, "")));
   }
 
   return "#9ca3af";

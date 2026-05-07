@@ -175,6 +175,31 @@
 <script type="module">
 import { supabase } from './supabase.js';
 
+function getEFColor(intensity) {
+  if (!intensity) return "#9ca3af";
+
+  const i = intensity.toString().toUpperCase();
+
+  const colors = {
+    0: "#7ED957",
+    1: "#C9E265",
+    2: "#FFD34E",
+    3: "#FF8C42",
+    4: "#FF1A1A",
+    5: "#8E44AD"
+  };
+
+  function get(num) {
+    return colors[num] || "#9ca3af";
+  }
+
+  if (i.includes("EF")) return get(parseInt(i.replace(/\D/g, "")));
+  if (i.includes("F")) return get(parseInt(i.replace(/\D/g, "")));
+  if (i.includes("IF")) return get(parseInt(i.replace(/\D/g, "")));
+
+  return "#9ca3af";
+}
+
 const id = new URLSearchParams(window.location.search).get("id");
 
 if (!id) {
@@ -251,8 +276,10 @@ async function loadTornado() {
     <div class="meta">
       <p><b>State:</b> ${data.state || data.town || "N/A"}</p>
       <p><b>Date:</b> ${data.date || "N/A"}</p>
-      <p><b>Intensity:</b> <span class="rating">${data.intensity || "N/A"}</span></p>
-    </div>
+      <p>
+        <b>Intensity:</b>
+        <span id="intensity">${data.intensity || "N/A"}</span>
+      </p>    </div>
 
     <h3>Summary</h3>
     <p>${data.description || "No approved summary yet."}</p>
