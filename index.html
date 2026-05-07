@@ -343,7 +343,7 @@ let allTornadoes = [];
 function getEFColor(intensity) {
   if (!intensity) return "#9ca3af";
 
-  const i = intensity.toString().toUpperCase();
+  const i = intensity.toString();
 
   const colors = {
     0: "#7ED957",
@@ -514,7 +514,7 @@ window.createTornado = async function () {
 
   const { error } = await supabase.from("tornadoes").insert([{
     name,
-    states: state.split("-").map(s => s.trim().toUpperCase()),
+    states: state.split("-").map(s => s.trim()),
     date,
     intensity,
     status: "pending"
