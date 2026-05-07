@@ -185,19 +185,15 @@ function getEFColor(intensity) {
     1: "#C9E265",
     2: "#FFD34E",
     3: "#FF8C42",
-    4: "#FF1A1A",
+    4: "#FF1A1A",   // EF4 red
     5: "#8E44AD"
   };
 
-  function get(num) {
-    return colors[num] || "#9ca3af";
-  }
+  const num = i.match(/\d/); // safely extract number
 
-  if (i.includes("EF")) return get(parseInt(i.replace(/\D/g, "")));
-  if (i.includes("F")) return get(parseInt(i.replace(/\D/g, "")));
-  if (i.includes("IF")) return get(parseInt(i.replace(/\D/g, "")));
+  if (!num) return "#9ca3af";
 
-  return "#9ca3af";
+  return colors[num[0]] || "#9ca3af";
 }
 
 const id = new URLSearchParams(window.location.search).get("id");
@@ -278,7 +274,9 @@ async function loadTornado() {
       <p><b>Date:</b> ${data.date || "N/A"}</p>
       <p>
         <b>Intensity:</b>
-        <span id="intensity">${data.intensity || "N/A"}</span>
+        <span id="intensity" style="color:${getEFColor(data.intensity)};font-weight:bold">
+          ${data.intensity || "N/A"}
+        </span>
       </p>    </div>
 
     <h3>Summary</h3>
@@ -333,7 +331,7 @@ async function loadUploads() {
   });
 }
 
-loadTornado();
+window.addEventListener("DOMContentLoaded", loadTornado);
 </script>
 
 </body>
