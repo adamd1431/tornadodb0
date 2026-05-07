@@ -166,6 +166,7 @@
   </div>
 
   <div class="nav-right">
+    <button onclick="openRandomTornado()">🎲 Random</button>
     <button onclick="goProfile()">Profile</button>
   </div>
 </div>
@@ -315,6 +316,18 @@ function showUsernamePopup(user) {
     </div>
   `);
 }
+
+window.openRandomTornado = function () {
+  if (!allTornadoes.length) {
+    alert("No tornadoes loaded.");
+    return;
+  }
+
+  const random =
+    allTornadoes[Math.floor(Math.random() * allTornadoes.length)];
+
+  location.href = "tornado.html?id=" + random.id;
+};
 
 window.saveUsername = async function (userId) {
   const username = document.getElementById("newUsername").value.trim();
