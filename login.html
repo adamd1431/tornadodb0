@@ -107,30 +107,63 @@ window.toggleMode = function () {
       ? "Need an account? Sign Up"
       : "Already have an account? Sign In";
 
+  // Hide username field on login
   document.getElementById("username").style.display =
     isLogin ? "none" : "block";
+
+  // Change placeholder
+  document.getElementById("email").placeholder =
+    isLogin
+      ? "Email or Username"
+      : "Email";
 };
 
 window.submitAuth = async function () {
-  const username = document.getElementById("username").value.trim();
-  const email = document.getElementById("email").value.trim();
-  const password = document.getElementById("password").value;
 
-  if (!email || !password) {
-    alert("Email and password required.");
+  const usernameInput =
+    document.getElementById("username").value.trim();
+
+  const emailInput =
+    document.getElementById("email").value.trim();
+
+  const password =
+    document.getElementById("password").value;
+
+  if (!emailInput || !password) {
+    alert("Email/username and password required.");
     return;
   }
 
-  if (!isLogin && !username) {
-    alert("Username required.");
-    return;
-  }
-
+  // =========================
+  // LOGIN
+  // =========================
   if (isLogin) {
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password
-    });
+
+    let loginEmail = emailInput;
+
+    // If no @ sign → treat as username
+    if (!emailInput.includes("@")) {
+
+      const { data: profile, error: profileError } =
+        await supabase
+          .from("profiles")
+          .select("email")
+          .eq("username", emailInput)
+          .maybeSingle();
+
+      if (profileError || !profile) {
+        alert("Username not found.");
+        return;
+      }
+
+      loginEmail = profile.email;
+    }
+
+    const { error } =
+      await supabase.auth.signInWithPassword({
+        email: loginEmail,
+        password
+      });
 
     if (error) {
       alert(error.message);
@@ -141,10 +174,30 @@ window.submitAuth = async function () {
     return;
   }
 
-  const { data, error } = await supabase.auth.signUp({
-    email,
-    password
-  });
+  // =========================
+  // SIGN UP
+  // =========================
+  if (!usernameInput) {
+    alert("Username required.");
+    return;
+  }
+
+  const { data: existingUser } = await supabase
+    .from("profiles")
+    .select("username")
+    .eq("username", usernameInput)
+    .maybeSingle();
+
+  if (existingUser) {
+    alert("Username already taken.");
+    return;
+  }
+
+  const { data, error } =
+    await supabase.auth.signUp({
+      email: emailInput,
+      password
+    });
 
   if (error) {
     alert(error.message);
@@ -153,19 +206,23 @@ window.submitAuth = async function () {
 
   const user = data.user;
 
-  if (user) {
-    const { error: profileError } = await supabase
+  if (!user) {
+    alert("Signup failed.");
+    return;
+  }
+
+  const { error: profileError } =
+    await supabase
       .from("profiles")
       .insert([{
         id: user.id,
-        username,
-        email
+        username: usernameInput,
+        email: emailInput
       }]);
 
-    if (profileError) {
-      alert(profileError.message);
-      return;
-    }
+  if (profileError) {
+    alert(profileError.message);
+    return;
   }
 
   alert("Account created!");
@@ -173,14 +230,15 @@ window.submitAuth = async function () {
 };
 
 window.signInWithGoogle = async function () {
+
   await supabase.auth.signInWithOAuth({
     provider: "google",
     options: {
       redirectTo: window.location.origin
     }
   });
+
 };
 </script>
-
 </body>
 </html>
