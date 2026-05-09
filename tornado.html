@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>Tornado Details</title>
+  <title>UTWX Tornado Archive</title>
 
   <style>
     body {
@@ -133,13 +133,6 @@
 
 <!-- CONTENT -->
 <div id="tabContainer">
-
-  <div id="writeups" class="tab">
-    <h3>Writeups</h3>
-    <input id="writeupLink">
-    <button onclick="uploadSource()">Add</button>
-    <div id="writeupsContent"></div>
-  </div>
 
   <div id="tornado_pics" class="tab" style="display:none;">
     <h3>Tornado Pictures</h3>
@@ -303,7 +296,7 @@ async function loadTornado() {
     <h3>🌪 Tornado Information</h3>
 
     <div class="meta">
-      <p><b>State:</b> ${data.state || data.town || "N/A"}</p>
+      <p><b>State:</b> ${(data.states || []).join(" - ") || "N/A"}</p>
       <p><b>Date:</b> ${data.date || "N/A"}</p>
       <p>
         <b>Intensity:</b>
