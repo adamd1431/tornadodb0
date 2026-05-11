@@ -288,6 +288,32 @@ window.uploadWriteup = async function () {
   document.getElementById("writeupLink").value = "";
 };
 
+window.submitSummary = async function () {
+  const text = document.getElementById("summaryInput").value.trim();
+
+  if (!text) {
+    alert("Summary cannot be empty.");
+    return;
+  }
+
+  const { error } = await supabase
+    .from("tornadoes")
+    .update({
+      pending_description: text
+    })
+    .eq("id", id);
+
+  if (error) {
+    alert(error.message);
+    return;
+  }
+
+  alert("Summary submitted for approval!");
+  document.getElementById("summaryInput").value = "";
+
+  loadTornado();
+};
+
 // LOAD TORNADO
 async function loadTornado() {
   const { data, error } = await supabase
@@ -325,6 +351,12 @@ async function loadTornado() {
       <button onclick="uploadWriteup()">Add Writeup</button>
     </div>
 
+    <div style="margin-top:20px;">
+      <h3>Add Summary</h3>
+      <textarea id="summaryInput" placeholder="Write a tornado summary..."></textarea>
+      <button onclick="submitSummary()">Submit Summary</button>
+    </div>
+    
     <div id="writeupsBox" style="margin-top:20px;"></div>
 
     ${data.pending_description ? `
@@ -392,26 +424,36 @@ async function loadWriteups(tornadoId) {
     .eq("category", "writeups")
     .eq("status", "approved");
 
-  if (error) {
-    console.error(error);
-    return;
-  }
-
   const box = document.getElementById("writeupsBox");
 
-  if (!data || data.length === 0) {
-    box.innerHTML = "<b>Writeups:</b> None";
+  if (error || !data || data.length === 0) {
+    box.innerHTML = "<h3>Writeups</h3><p>None</p>";
     return;
   }
 
   box.innerHTML = `
     <h3>Writeups</h3>
     ${data.map(w => `
-      <p>
+      <div style="
+        margin-bottom:15px;
+        padding:10px;
+        border:1px solid #374151;
+        border-radius:10px;
+        background:rgba(255,255,255,0.03);
+      ">
+
         <a href="${w.file_url}" target="_blank" style="color:#60a5fa;">
-          ${w.file_url}
+          Open Writeup
         </a>
-      </p>
+
+        <div style="margin-top:10px;">
+          <iframe
+            src="${w.file_url}"
+            style="width:100%;height:300px;border:none;border-radius:8px;"
+          ></iframe>
+        </div>
+
+      </div>
     `).join("")}
   `;
 }
