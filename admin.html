@@ -145,7 +145,6 @@ async function checkAdmin() {
     return;
   }
 
-  document.getElementById("loginBox").style.display = "none";
   document.getElementById("adminPanel").style.display = "block";
 
   loadTornadoes();
@@ -158,7 +157,7 @@ async function loadTornadoes() {
   const { data } = await supabase
     .from("tornadoes")
     .select("*")
-    .or("status.eq.pending,pending_description.not.is.null");
+    .or("status.eq.pending,pending_description.neq.null");
 
   const safe = data || [];
 
@@ -168,7 +167,7 @@ async function loadTornadoes() {
 
         <h3>${t.name || "Unnamed Tornado"}</h3>
 
-        <p><b>State:</b> ${normalizeStates(t).join(" - ") || "N/A"}
+        <p><b>State:</b> ${normalizeStates(t).join(" - ") || "N/A"}</p>
         <p><b>Date:</b> ${t.date || "N/A"}</p>
         <p><b>Intensity:</b> ${t.intensity || "N/A"}</p>
 
@@ -290,7 +289,7 @@ function refresh() {
 window.loadTornadoes = loadTornadoes;
 window.loadUploads = loadUploads;
 
-checkAdmin();
+window.addEventListener("DOMContentLoaded", checkAdmin);
 
 </script>
 
