@@ -321,27 +321,54 @@ window.uploadWriteup = async function () {
 window.submitSummary = async function () {
   const text = document.getElementById("summaryInput").value.trim();
 
-  if (!text) {
-    alert("Summary cannot be empty.");
+  if (!text) return alert("Write a summary first.");
+
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (!user) {
+    alert("Please log in first.");
     return;
   }
 
-  const { error } = await supabase
+  // Check if this user already submitted a summary for this tornado
+  const { data: existing } = await supabase
+    .from("summary_submissions")
+    .select("*")
+    .eq("tornado_id", id)
+    .eq("user_id", user.id)
+    .maybeSingle();
+
+  // Update tornado pending summary
+  await supabase
     .from("tornadoes")
     .update({
       pending_description: text
     })
     .eq("id", id);
 
-  if (error) {
-    alert(error.message);
-    return;
+  // If first summary by this user for this tornado:
+  if (!existing) {
+    await supabase.from("summary_submissions").insert([{
+      tornado_id: id,
+      user_id: user.id
+    }]);
+
+    // Increment uploads count once
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("uploads_count")
+      .eq("id", user.id)
+      .single();
+
+    await supabase
+      .from("profiles")
+      .update({
+        uploads_count: (profile?.uploads_count || 0) + 1
+      })
+      .eq("id", user.id);
   }
 
-  alert("Summary submitted for approval!");
-  document.getElementById("summaryInput").value = "";
-
-  loadTornado();
+  alert("Summary submitted for approval.");
 };
 
 // LOAD TORNADO
