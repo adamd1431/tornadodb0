@@ -157,7 +157,7 @@ async function loadTornadoes() {
   const { data } = await supabase
     .from("tornadoes")
     .select("*")
-    .or("status.eq.pending,pending_description.neq.null");
+    .or("status.eq.pending,status.is.null,pending_description.not.is.null");
 
   const safe = data || [];
 
