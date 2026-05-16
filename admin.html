@@ -134,7 +134,7 @@ async function loadSummaries() {
     safe.length
       ? safe.map(s => `
         <div class="card">
-          <p><b>Tornado:</b> ${s.tornadoes?.name || "Unknown"}</p>
+          <p><b>Tornado ID:</b> ${s.tornado_id || "Unknown"}</p>
           <p>${s.summary_text}</p>
 
           <button onclick="approveSummarySubmission(
@@ -306,7 +306,15 @@ window.loadTornadoes = loadTornadoes;
 window.loadUploads = loadUploads;
 window.loadSummaries = loadSummaries;
 
-window.addEventListener("DOMContentLoaded", checkAdmin);
+window.addEventListener("DOMContentLoaded", async () => {
+  try {
+    await checkAdmin();
+  } catch (err) {
+    console.error(err);
+    document.getElementById("panel").innerHTML =
+      "<p style='color:red'>Error loading admin panel. Open console (F12) to see details.</p>";
+  }
+});
 
 </script>
 
