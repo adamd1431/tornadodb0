@@ -322,7 +322,10 @@ window.submitSummary = async function () {
   const summary =
     document.getElementById("summaryInput").value.trim();
 
-  if (!summary) return;
+  if (!summary) {
+    alert("Write a summary first.");
+    return;
+  }
 
   const { data: { user } } = await supabase.auth.getUser();
 
@@ -331,42 +334,25 @@ window.submitSummary = async function () {
     return;
   }
 
-  // submit summary into summary_submissions table
-  await supabase
+  const { data, error } = await supabase
     .from("summary_submissions")
     .insert([{
       tornado_id: id,
       user_id: user.id,
       summary_text: summary,
       status: "pending"
-    }]);
+    }])
+    .select();
 
-  // count first summary only
-  const { data: countRow } = await supabase
-    .from("user_upload_counts")
-    .select("*")
-    .eq("user_id", user.id)
-    .maybeSingle();
+  console.log("SUMMARY INSERT RESULT:", data);
+  console.log("SUMMARY INSERT ERROR:", error);
 
-  if (!countRow) {
-    await supabase
-      .from("user_upload_counts")
-      .insert([{
-        user_id: user.id,
-        upload_count: 1,
-        summary_submitted: true
-      }]);
-  } else if (!countRow.summary_submitted) {
-    await supabase
-      .from("user_upload_counts")
-      .update({
-        upload_count: countRow.upload_count + 1,
-        summary_submitted: true
-      })
-      .eq("user_id", user.id);
+  if (error) {
+    alert("Error: " + error.message);
+    return;
   }
 
-  alert("Summary submitted for approval!");
+  alert("Summary submitted!");
   location.reload();
 };
 
