@@ -124,8 +124,8 @@ async function loadSummaries() {
   view = "summaries";
 
   const { data } = await supabase
-    .from("summary_submissions")
-    .select("id, summary_text, tornado_id, tornadoes(name)")
+    .from("tornadoes")
+    .select("*")
     .eq("status", "pending");
 
   const safe = data || [];
