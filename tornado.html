@@ -319,56 +319,59 @@ window.uploadWriteup = async function () {
 };
 
 window.submitSummary = async function () {
-  const text = document.getElementById("summaryInput").value.trim();
+  const summary =
+    document.getElementById("summaryInput").value.trim();
 
-  if (!text) return alert("Write a summary first.");
+  if (!summary) return;
 
   const { data: { user } } = await supabase.auth.getUser();
-
   if (!user) {
     alert("Please log in first.");
     return;
   }
 
-  // Check if this user already submitted a summary for this tornado
-  const { data: existing } = await supabase
-    .from("summary_submissions")
-    .select("*")
-    .eq("tornado_id", id)
-    .eq("user_id", user.id)
-    .maybeSingle();
-
-  // Update tornado pending summary
+  // save pending summary
   await supabase
     .from("tornadoes")
     .update({
-      pending_description: text
+      pending_description: summary
     })
     .eq("id", id);
 
-  // If first summary by this user for this tornado:
-  if (!existing) {
-    await supabase.from("summary_submissions").insert([{
-      tornado_id: id,
-      user_id: user.id
-    }]);
+  // check user's upload count row
+  const { data: countRow } = await supabase
+    .from("user_upload_counts")
+    .select("*")
+    .eq("user_id", user.id)
+    .maybeSingle();
 
-    // Increment uploads count once
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("uploads_count")
-      .eq("id", user.id)
-      .single();
-
+  // no row yet
+  if (!countRow) {
     await supabase
-      .from("profiles")
-      .update({
-        uploads_count: (profile?.uploads_count || 0) + 1
-      })
-      .eq("id", user.id);
+      .from("user_upload_counts")
+      .insert([{
+        user_id: user.id,
+        upload_count: 1,
+        summary_submitted: true
+      }]);
   }
 
-  alert("Summary submitted for approval.");
+  // row exists but first summary
+  else if (!countRow.summary_submitted) {
+    await supabase
+      .from("user_upload_counts")
+      .update({
+        upload_count: countRow.upload_count + 1,
+        summary_submitted: true
+      })
+      .eq("user_id", user.id);
+  }
+
+  // if summary_submitted already true:
+  // do nothing (summary edits don't count again)
+
+  alert("Summary submitted for approval!");
+  location.reload();
 };
 
 // LOAD TORNADO
