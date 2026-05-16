@@ -106,6 +106,7 @@
   <div style="text-align:center; margin-bottom:20px;">
     <button onclick="loadTornadoes()">Tornadoes</button>
     <button onclick="loadUploads()">Uploads</button>
+    <button onclick="loadSummaries()">Summaries</button>
   </div>
 
   <hr>
@@ -118,6 +119,27 @@ import { supabase } from './supabase.js';
 
 const ADMIN_EMAIL = "lazerbuffalo1431@gmail.com"; // replace with your actual account email
 let view = "tornadoes";
+
+async function loadSummaries() {
+  const { data } = await supabase
+    .from("summary_submissions")
+    .select("*, tornadoes(name)")
+    .eq("status", "pending");
+
+  document.getElementById("panel").innerHTML =
+    data.length
+      ? data.map(s => `
+        <div class="card">
+          <p><b>Tornado:</b> ${s.tornadoes?.name || "Unknown"}</p>
+          <p>${s.summary_text}</p>
+
+          <button onclick="approveSummarySubmission('${s.id}')">
+            Approve
+          </button>
+        </div>
+      `).join("")
+      : "<p>No pending summaries.</p>";
+}
 
 async function checkAdmin() {
   const { data: { user } } = await supabase.auth.getUser();
@@ -157,7 +179,7 @@ async function loadTornadoes() {
   const { data } = await supabase
     .from("tornadoes")
     .select("*")
-    .or("status.eq.pending,status.is.null,pending_description.not.is.null");
+    .or("pending_description.not.is.null,description.not.is.null");
 
   const safe = data || [];
 
@@ -260,26 +282,20 @@ window.reject = async function(type, id) {
 };
 
 // 📝 APPROVE SUMMARY
-window.approveSummary = async function(id) {
-
-  const { data } = await supabase
-    .from("tornadoes")
-    .select("pending_description")
-    .eq("id", id)
-    .single();
-
-  if (!data?.pending_description) return;
-
+window.approveSummarySubmission = async function(id, tornado_id, text) {
   await supabase
     .from("tornadoes")
-    .update({
-      description: data.pending_description,
-      pending_description: null
-    })
+    .update({ description: text })
+    .eq("id", tornado_id);
+
+  await supabase
+    .from("summary_submissions")
+    .delete()
     .eq("id", id);
 
-  alert("Summary approved!");
-  loadTornadoes();
+  alert("Summary approved");
+
+  if (view === "summaries") loadSummaries();
 };
 
 // 🔄 REFRESH
