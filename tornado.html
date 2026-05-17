@@ -336,16 +336,21 @@ window.submitSummary = async function () {
 
   const { data, error } = await supabase
     .from("summary_submissions")
-    .insert([{
-      tornado_id: id,
-      user_id: user.id,
-      summary_text: summary,
-      status: "pending"
-    }])
+    .upsert(
+      {
+        tornado_id: id,
+        user_id: user.id,
+        summary_text: summary,
+        status: "pending"
+      },
+      {
+        onConflict: "tornado_id,user_id"
+      }
+    )
     .select();
 
-  console.log("SUMMARY INSERT RESULT:", data);
-  console.log("SUMMARY INSERT ERROR:", error);
+  console.log("SUMMARY UPSERT RESULT:", data);
+  console.log("SUMMARY UPSERT ERROR:", error);
 
   if (error) {
     alert("Error: " + error.message);
