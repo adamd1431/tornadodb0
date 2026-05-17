@@ -7,35 +7,31 @@
   <style>
     :root {
       --bg0: #020617;
-      --bg1: #0f172a;
-      --bg2: #111827;
+      --bg1: #0b1220;
+      --bg2: #0f172a;
 
-      --card: rgba(30, 41, 59, 0.65);
+      --card: rgba(30, 41, 59, 0.55);
+      --glass: rgba(255,255,255,0.06);
       --border: rgba(255,255,255,0.08);
 
       --text: #ffffff;
       --muted: #94a3b8;
 
       --blue: #3b82f6;
-      --cyan: #22d3ee;
-      --yellow: #facc15;
-      --orange: #f97316;
-      --red: #ef4444;
-      --purple: #a855f7;
+      --yellow: #fbbf24;
     }
 
     /* ===== BASE ===== */
     body {
       margin: 0;
-      padding: 24px;
+      padding: 26px;
       font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
       color: var(--text);
       min-height: 100vh;
 
       background:
-        radial-gradient(circle at top left, rgba(59,130,246,0.18), transparent 45%),
-        radial-gradient(circle at top right, rgba(168,85,247,0.12), transparent 40%),
-        radial-gradient(circle at bottom, rgba(239,68,68,0.10), transparent 50%),
+        radial-gradient(circle at 10% 10%, rgba(59,130,246,0.18), transparent 40%),
+        radial-gradient(circle at 90% 30%, rgba(168,85,247,0.12), transparent 45%),
         linear-gradient(180deg, var(--bg0), var(--bg1), var(--bg2));
 
       background-attachment: fixed;
@@ -45,35 +41,27 @@
       box-sizing: border-box;
     }
 
-    /* subtle glow overlay */
+    /* subtle glow */
     body::before {
       content: "";
       position: fixed;
-      inset: -200px;
-      background: radial-gradient(circle, rgba(59,130,246,0.08), transparent 60%);
+      inset: 0;
+      background: radial-gradient(circle at center, rgba(59,130,246,0.08), transparent 60%);
+      pointer-events: none;
       z-index: -1;
     }
 
-    /* ===== HEADER ===== */
+    /* ===== TITLE (NO GRADIENT) ===== */
     h1 {
       text-align: center;
       font-size: 44px;
-      margin: 10px 0 6px;
-      font-weight: 900;
-
-      background: linear-gradient(90deg, var(--blue), var(--cyan), var(--purple));
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
+      margin: 10px 0 18px;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+      color: white;
     }
 
-    /* ===== NAV BUTTON ===== */
-    .topNav {
-      position: fixed;
-      top: 15px;
-      right: 15px;
-      z-index: 999;
-    }
-
+    /* ===== BUTTONS ===== */
     button {
       background: linear-gradient(135deg, #2563eb, #1d4ed8);
       color: white;
@@ -83,49 +71,65 @@
       cursor: pointer;
       font-weight: 600;
       transition: 0.2s ease;
-      box-shadow: 0 10px 25px rgba(59,130,246,0.25);
+      box-shadow: 0 8px 20px rgba(37,99,235,0.25);
     }
 
     button:hover {
       transform: translateY(-2px);
-      box-shadow: 0 14px 35px rgba(59,130,246,0.35);
+      filter: brightness(1.1);
     }
 
-    /* ===== CARD ===== */
+    /* ===== INPUTS ===== */
+    input, textarea {
+      width: 100%;
+      padding: 10px 12px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: rgba(15,23,42,0.7);
+      color: white;
+      outline: none;
+      margin-top: 8px;
+    }
+
+    textarea {
+      min-height: 140px;
+      resize: vertical;
+    }
+
+    input:focus, textarea:focus {
+      border-color: var(--blue);
+      box-shadow: 0 0 0 3px rgba(59,130,246,0.2);
+    }
+
+    /* ===== TOP NAV ===== */
+    .topNav {
+      position: fixed;
+      top: 14px;
+      right: 14px;
+      z-index: 999;
+    }
+
+    /* ===== MAIN CARD ===== */
     .card {
       background: var(--card);
+      backdrop-filter: blur(14px);
       border: 1px solid var(--border);
       border-radius: 18px;
       padding: 20px;
-      margin: 16px 0;
-
-      backdrop-filter: blur(14px);
-      box-shadow: 0 12px 35px rgba(0,0,0,0.35);
-
-      transition: 0.25s ease;
-    }
-
-    .card:hover {
-      transform: translateY(-5px);
-      border-color: rgba(59,130,246,0.5);
-      box-shadow: 0 18px 50px rgba(59,130,246,0.2);
+      margin-bottom: 18px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.35);
     }
 
     /* ===== META SECTION ===== */
     .meta {
-      margin-bottom: 12px;
-      padding-bottom: 10px;
+      margin-bottom: 14px;
+      padding-bottom: 12px;
       border-bottom: 1px solid rgba(255,255,255,0.08);
-    }
-
-    .meta h2 {
-      margin: 0;
-      font-size: 26px;
-    }
-
-    .meta p {
-      margin: 4px 0;
       color: var(--muted);
+    }
+
+    .meta b {
+      color: white;
     }
 
     /* ===== TABS ===== */
@@ -133,22 +137,38 @@
       display: flex;
       flex-wrap: wrap;
       gap: 10px;
-      margin: 18px 0;
+      margin-bottom: 18px;
     }
 
     .tab {
       background: rgba(255,255,255,0.04);
-      border: 1px solid rgba(255,255,255,0.08);
-      padding: 10px 14px;
+      border: 1px solid var(--border);
       border-radius: 12px;
+      padding: 10px 14px;
       cursor: pointer;
       transition: 0.2s ease;
-      font-size: 14px;
+      font-weight: 600;
+      color: var(--muted);
     }
 
     .tab:hover {
-      border-color: var(--blue);
+      border-color: rgba(59,130,246,0.4);
+      color: white;
       transform: translateY(-2px);
+    }
+
+    .tab.active {
+      background: rgba(59,130,246,0.15);
+      border-color: rgba(59,130,246,0.5);
+      color: white;
+    }
+
+    /* ===== CONTENT BOX ===== */
+    .tabContent {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 16px;
     }
 
     /* ===== IMAGES ===== */
@@ -165,46 +185,26 @@
       word-break: break-word;
     }
 
-    /* ===== INPUTS ===== */
-    input, textarea {
-      width: 100%;
-      padding: 10px;
-      border-radius: 12px;
-      border: 1px solid rgba(255,255,255,0.08);
-      background: rgba(15,23,42,0.7);
-      color: white;
-      box-sizing: border-box;
-      margin-top: 8px;
-      outline: none;
-    }
-
-    textarea {
-      min-height: 120px;
-    }
-
-    input:focus, textarea:focus {
-      border-color: var(--blue);
-      box-shadow: 0 0 0 3px rgba(59,130,246,0.2);
-    }
-
     /* ===== PENDING BOX ===== */
     .pendingBox {
       margin-top: 15px;
       padding: 12px;
-      border: 1px dashed #fbbf24;
+      border: 1px dashed var(--yellow);
       border-radius: 12px;
-      background: rgba(250,204,21,0.05);
+      background: rgba(251,191,36,0.06);
     }
 
-    /* ===== INTENSITY BADGE ===== */
-    .badge {
-      display: inline-block;
-      padding: 4px 10px;
-      border-radius: 999px;
-      font-size: 13px;
-      font-weight: 700;
-      border: 1px solid rgba(255,255,255,0.12);
-      background: rgba(255,255,255,0.05);
+    /* ===== RATING ===== */
+    .rating {
+      color: var(--yellow);
+      font-weight: bold;
+    }
+
+    /* ===== SMALL IMPROVEMENTS ===== */
+    hr {
+      border: none;
+      border-top: 1px solid rgba(255,255,255,0.08);
+      margin: 14px 0;
     }
   </style>
 </head>
