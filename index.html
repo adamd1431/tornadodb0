@@ -663,30 +663,31 @@ window.applyFilters = function () {
   if (sort === "weakest") filtered.sort((a,b)=>intensityValue(a.intensity)-intensityValue(b.intensity));
 
   document.getElementById("list").innerHTML = filtered.map(t => `
-  <div class="card"
-       onclick="openTornado('${t.id}')"
-       style="box-shadow:${getIntensityGlow(t.intensity)};">
+    <div class="card"
+         onclick="openTornado('${t.id}')"
+         style="box-shadow:${getIntensityGlow(t.intensity)};">
 
-    <h2 style="margin:0 0 6px;">
-      ${t.name}
-    </h2>
+      <h2 style="margin:0 0 6px;">
+        ${t.name}
+      </h2>
 
-    <div style="margin-bottom:8px;">
-      <span class="badge" style="color:${getEFColor(t.intensity)};">
-        ${formatIntensity(t.intensity)}
-      </span>
+      <div style="margin-bottom:8px;">
+        <span class="badge" style="color:${getEFColor(t.intensity)};">
+          ${formatIntensity(t.intensity)}
+        </span>
+      </div>
+
+      <p style="margin:4px 0; color:#94a3b8;">
+        📍 ${normalizeStates(t).join(" - ") || "N/A"}
+      </p>
+
+      <p style="margin:4px 0; color:#94a3b8;">
+        📅 ${t.date || "N/A"}
+      </p>
+
     </div>
-
-    <p style="margin:4px 0; color:#94a3b8;">
-      📍 ${normalizeStates(t).join(" - ") || "N/A"}
-    </p>
-
-    <p style="margin:4px 0; color:#94a3b8;">
-      📅 ${t.date || "N/A"}
-    </p>
-
-  </div>
-`).join("");
+  `).join("");
+};
 
 window.openTornado = id => location.href = 'tornado.html?id=' + id;
 
