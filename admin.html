@@ -302,7 +302,8 @@ window.approveSummarySubmission = async function(id, tornado_id, text) {
     .eq("id", id)
     .select();
 
-  console.log("summary update:", summaryUpdate);
+  console.log("summary update error:", summaryUpdate.error);
+  console.log("summary update data:", summaryUpdate.data);
 
   alert("Summary approved");
   loadSummaries();
