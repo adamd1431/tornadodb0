@@ -275,6 +275,16 @@
     ::-webkit-scrollbar-thumb:hover {
       background: linear-gradient(#475569, #64748b);
     }
+
+    .badge {
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-weight: 700;
+      font-size: 13px;
+      display: inline-block;
+      border: 1px solid rgba(255,255,255,0.12);
+      background: rgba(255,255,255,0.05);
+     }
   </style>
 </head>
 
@@ -441,6 +451,11 @@ async function initAuth() {
   guestPopup.style.display = user ? "none" : "flex";
 }
 
+function getIntensityGlow(intensity) {
+  const c = getEFColor(intensity);
+  return `0 0 18px ${c}33`;
+}
+
 function normalizeStates(t) {
   if (Array.isArray(t.states)) return t.states;
 
@@ -528,30 +543,18 @@ window.saveUsername = async function (userId) {
 let allTornadoes = [];
 
 function getEFColor(intensity) {
-  if (!intensity) return "#9ca3af"; // fallback gray
+  if (!intensity) return "#9ca3af"; // unknown gray
 
   const i = intensity.toString().toUpperCase();
 
-  // U / unknown intensity
-  if (i.includes("UF") || i === "U" || i.includes("UNK") || i.includes("EFU")) {
-    return "#9ca3af"; // gray
-  }
+  if (i.includes("U")) return "#9ca3af";   // EFU / unknown
 
-  // EF0 → light blue
-  if (i.includes("0")) {
-    return "#38bdf8"; // light blue
-  }
-
-  // EF1 → green
-  if (i.includes("1")) {
-    return "#22c55e"; // green
-  }
-
-  // EF2+
-  if (i.includes("2")) return "#facc15"; // yellow
-  if (i.includes("3")) return "#fb923c"; // orange
-  if (i.includes("4")) return "#ef4444"; // red
-  if (i.includes("5")) return "#a855f7"; // purple
+  if (i.includes("0")) return "#60a5fa";   // EF0 - light blue (SPC-style)
+  if (i.includes("1")) return "#22c55e";   // EF1 - green
+  if (i.includes("2")) return "#facc15";   // EF2 - yellow
+  if (i.includes("3")) return "#f97316";   // EF3 - orange
+  if (i.includes("4")) return "#ef4444";   // EF4 - red
+  if (i.includes("5")) return "#d946ef";   // EF5 - magenta/purple
 
   return "#9ca3af";
 }
@@ -660,22 +663,30 @@ window.applyFilters = function () {
   if (sort === "weakest") filtered.sort((a,b)=>intensityValue(a.intensity)-intensityValue(b.intensity));
 
   document.getElementById("list").innerHTML = filtered.map(t => `
-    <div class="card" onclick="openTornado('${t.id}')">
-      <h2>${t.name}</h2>
-      <p>
-        <b>States:</b>
-        ${normalizeStates(t).join(" - ") || "N/A"}
-      </p>
-      <p><b>Date:</b> ${t.date || "N/A"}</p>
-      <p>
-        <b>Intensity:</b>
-        <span style="color:${getEFColor(t.intensity)}; font-weight:bold;">
-          ${formatIntensity(t.intensity)}
-        </span>
-      </p>
+  <div class="card"
+       onclick="openTornado('${t.id}')"
+       style="box-shadow:${getIntensityGlow(t.intensity)};">
+
+    <h2 style="margin:0 0 6px;">
+      ${t.name}
+    </h2>
+
+    <div style="margin-bottom:8px;">
+      <span class="badge" style="color:${getEFColor(t.intensity)};">
+        ${formatIntensity(t.intensity)}
+      </span>
     </div>
-  `).join("");
-};
+
+    <p style="margin:4px 0; color:#94a3b8;">
+      📍 ${normalizeStates(t).join(" - ") || "N/A"}
+    </p>
+
+    <p style="margin:4px 0; color:#94a3b8;">
+      📅 ${t.date || "N/A"}
+    </p>
+
+  </div>
+`).join("");
 
 window.openTornado = id => location.href = 'tornado.html?id=' + id;
 
