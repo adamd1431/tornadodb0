@@ -5,17 +5,33 @@
   <title>UTWX Tornado Database</title>
 
   <style>
+    :root {
+      --bg1: #020617;
+      --bg2: #0f172a;
+      --bg3: #111827;
+
+      --card: rgba(30, 41, 59, 0.65);
+      --cardBorder: rgba(255,255,255,0.08);
+
+      --blue: #3b82f6;
+      --blueDark: #1d4ed8;
+
+      --text: #ffffff;
+      --muted: #94a3b8;
+    }
+
+    /* ===== GLOBAL ===== */
     body {
       margin: 0;
       padding: 25px;
-      font-family: 'Segoe UI', sans-serif;
-      color: white;
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      color: var(--text);
       min-height: 100vh;
 
       background:
-        radial-gradient(circle at top, rgba(59,130,246,0.18), transparent 40%),
-        radial-gradient(circle at bottom, rgba(239,68,68,0.10), transparent 45%),
-        linear-gradient(135deg, #020617, #0f172a 50%, #111827);
+        radial-gradient(circle at top, rgba(59,130,246,0.18), transparent 45%),
+        radial-gradient(circle at bottom, rgba(239,68,68,0.10), transparent 50%),
+        linear-gradient(135deg, var(--bg1), var(--bg2) 50%, var(--bg3));
 
       background-attachment: fixed;
     }
@@ -23,16 +39,20 @@
     /* ===== HEADER ===== */
     h1 {
       text-align: center;
-      font-size: 58px;
-      margin: 0 0 10px;
-      font-weight: 800;
+      font-size: 56px;
+      margin: 10px 0 8px;
+      font-weight: 900;
       letter-spacing: 1px;
-      text-shadow: 0 0 20px rgba(59,130,246,0.35);
+      text-shadow: 0 0 25px rgba(59,130,246,0.35);
+    }
+
+    p {
+      margin: 0;
     }
 
     /* ===== BUTTONS ===== */
     button {
-      background: linear-gradient(135deg, #2563eb, #1d4ed8);
+      background: linear-gradient(135deg, var(--blue), var(--blueDark));
       color: white;
       border: none;
       padding: 11px 16px;
@@ -40,13 +60,17 @@
       cursor: pointer;
       font-weight: 600;
       transition: 0.2s ease;
-      box-shadow: 0 6px 18px rgba(37,99,235,0.25);
+      box-shadow: 0 6px 18px rgba(59,130,246,0.25);
       margin-right: 8px;
     }
 
     button:hover {
       transform: translateY(-2px);
       filter: brightness(1.1);
+    }
+
+    button:active {
+      transform: translateY(0px);
     }
 
     /* ===== INPUTS ===== */
@@ -57,6 +81,11 @@
       background: rgba(17,24,39,0.85);
       color: white;
       outline: none;
+    }
+
+    input:focus, select:focus {
+      border-color: var(--blue);
+      box-shadow: 0 0 0 2px rgba(59,130,246,0.2);
     }
 
     /* ===== NAV ===== */
@@ -81,12 +110,12 @@
     /* ===== HERO ===== */
     .hero {
       text-align: center;
-      padding: 80px 20px 30px;
+      padding: 80px 20px 25px;
     }
 
     .hero p {
       font-size: 18px;
-      color: #94a3b8;
+      color: var(--muted);
       margin-top: 8px;
     }
 
@@ -106,6 +135,12 @@
       border-radius: 16px;
       text-align: center;
       min-width: 170px;
+      transition: 0.2s ease;
+    }
+
+    .statBox:hover {
+      transform: translateY(-3px);
+      border-color: rgba(59,130,246,0.4);
     }
 
     .statBox h2 {
@@ -114,8 +149,8 @@
     }
 
     .statBox p {
-      margin: 6px 0 0;
-      color: #94a3b8;
+      margin-top: 6px;
+      color: var(--muted);
       font-size: 13px;
     }
 
@@ -130,6 +165,7 @@
       background: rgba(255,255,255,0.03);
       border: 1px solid #1f2937;
       border-radius: 14px;
+      backdrop-filter: blur(8px);
     }
 
     .searchBar {
@@ -143,9 +179,9 @@
 
     /* ===== CARDS ===== */
     .card {
-      background: rgba(30, 41, 59, 0.75);
-      backdrop-filter: blur(12px);
-      border: 1px solid rgba(255,255,255,0.08);
+      background: var(--card);
+      backdrop-filter: blur(14px);
+      border: 1px solid var(--cardBorder);
       border-radius: 18px;
       padding: 20px;
       margin: 16px 0;
@@ -156,8 +192,8 @@
 
     .card:hover {
       transform: translateY(-6px);
-      border-color: #60a5fa;
-      box-shadow: 0 16px 40px rgba(37,99,235,0.2);
+      border-color: rgba(59,130,246,0.5);
+      box-shadow: 0 16px 40px rgba(59,130,246,0.2);
     }
 
     /* ===== FORM ===== */
@@ -173,6 +209,7 @@
       border-radius: 16px;
       width: 360px;
       z-index: 1000;
+      backdrop-filter: blur(10px);
     }
 
     /* ===== FOOTER ===== */
@@ -181,6 +218,7 @@
       margin-top: 60px;
       color: #64748b;
       padding-bottom: 20px;
+      font-size: 14px;
     }
 
     /* ===== SCROLLBAR ===== */
@@ -199,6 +237,11 @@
 
     ::-webkit-scrollbar-thumb:hover {
       background: #475569;
+    }
+
+    /* ===== SMALL IMPROVEMENTS ===== */
+    * {
+      box-sizing: border-box;
     }
   </style>
 </head>
