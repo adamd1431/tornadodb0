@@ -5,48 +5,68 @@
   <title>UTWX Tornado Archive</title>
 
   <style>
+    :root {
+      --bg0: #020617;
+      --bg1: #0f172a;
+      --bg2: #111827;
+
+      --card: rgba(30, 41, 59, 0.65);
+      --border: rgba(255,255,255,0.08);
+
+      --text: #ffffff;
+      --muted: #94a3b8;
+
+      --blue: #3b82f6;
+      --cyan: #22d3ee;
+      --yellow: #facc15;
+      --orange: #f97316;
+      --red: #ef4444;
+      --purple: #a855f7;
+    }
+
+    /* ===== BASE ===== */
     body {
       margin: 0;
-      padding: 25px;
-      font-family: Arial, sans-serif;
-      background: linear-gradient(to bottom, #111827, #1f2937);
-      color: white;
+      padding: 24px;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
+      color: var(--text);
       min-height: 100vh;
+
+      background:
+        radial-gradient(circle at top left, rgba(59,130,246,0.18), transparent 45%),
+        radial-gradient(circle at top right, rgba(168,85,247,0.12), transparent 40%),
+        radial-gradient(circle at bottom, rgba(239,68,68,0.10), transparent 50%),
+        linear-gradient(180deg, var(--bg0), var(--bg1), var(--bg2));
+
+      background-attachment: fixed;
     }
 
+    * {
+      box-sizing: border-box;
+    }
+
+    /* subtle glow overlay */
+    body::before {
+      content: "";
+      position: fixed;
+      inset: -200px;
+      background: radial-gradient(circle, rgba(59,130,246,0.08), transparent 60%);
+      z-index: -1;
+    }
+
+    /* ===== HEADER ===== */
     h1 {
       text-align: center;
-      font-size: 42px;
-      margin-bottom: 25px;
+      font-size: 44px;
+      margin: 10px 0 6px;
+      font-weight: 900;
+
+      background: linear-gradient(90deg, var(--blue), var(--cyan), var(--purple));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
     }
 
-    button {
-      background: #2563eb;
-      color: white;
-      border: none;
-      padding: 10px 16px;
-      border-radius: 8px;
-      cursor: pointer;
-      font-weight: bold;
-    }
-
-    button:hover {
-      background: #1d4ed8;
-    }
-
-    input, textarea {
-      width: 100%;
-      padding: 10px;
-      border-radius: 8px;
-      border: 1px solid #4b5563;
-      background: #111827;
-      color: white;
-      box-sizing: border-box;
-      margin-top: 8px;
-    }
-
-    textarea { min-height: 120px; }
-
+    /* ===== NAV BUTTON ===== */
     .topNav {
       position: fixed;
       top: 15px;
@@ -54,55 +74,137 @@
       z-index: 999;
     }
 
-    .card {
-      background: rgba(255,255,255,0.05);
-      border: 1px solid #374151;
-      border-radius: 14px;
-      padding: 20px;
-      margin-bottom: 20px;
+    button {
+      background: linear-gradient(135deg, #2563eb, #1d4ed8);
+      color: white;
+      border: none;
+      padding: 10px 14px;
+      border-radius: 12px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: 0.2s ease;
+      box-shadow: 0 10px 25px rgba(59,130,246,0.25);
     }
 
+    button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 14px 35px rgba(59,130,246,0.35);
+    }
+
+    /* ===== CARD ===== */
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 20px;
+      margin: 16px 0;
+
+      backdrop-filter: blur(14px);
+      box-shadow: 0 12px 35px rgba(0,0,0,0.35);
+
+      transition: 0.25s ease;
+    }
+
+    .card:hover {
+      transform: translateY(-5px);
+      border-color: rgba(59,130,246,0.5);
+      box-shadow: 0 18px 50px rgba(59,130,246,0.2);
+    }
+
+    /* ===== META SECTION ===== */
+    .meta {
+      margin-bottom: 12px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+    }
+
+    .meta h2 {
+      margin: 0;
+      font-size: 26px;
+    }
+
+    .meta p {
+      margin: 4px 0;
+      color: var(--muted);
+    }
+
+    /* ===== TABS ===== */
     .tabs {
       display: flex;
       flex-wrap: wrap;
       gap: 10px;
-      margin-bottom: 20px;
+      margin: 18px 0;
     }
 
     .tab {
       background: rgba(255,255,255,0.04);
-      border: 1px solid #374151;
-      border-radius: 14px;
-      padding: 20px;
+      border: 1px solid rgba(255,255,255,0.08);
+      padding: 10px 14px;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: 0.2s ease;
+      font-size: 14px;
     }
 
+    .tab:hover {
+      border-color: var(--blue);
+      transform: translateY(-2px);
+    }
+
+    /* ===== IMAGES ===== */
     img {
-      max-width: 250px;
-      border-radius: 10px;
+      max-width: 260px;
+      border-radius: 12px;
       margin: 8px;
+      border: 1px solid rgba(255,255,255,0.08);
     }
 
+    /* ===== LINKS ===== */
     a {
       color: #93c5fd;
       word-break: break-word;
     }
 
+    /* ===== INPUTS ===== */
+    input, textarea {
+      width: 100%;
+      padding: 10px;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,0.08);
+      background: rgba(15,23,42,0.7);
+      color: white;
+      box-sizing: border-box;
+      margin-top: 8px;
+      outline: none;
+    }
+
+    textarea {
+      min-height: 120px;
+    }
+
+    input:focus, textarea:focus {
+      border-color: var(--blue);
+      box-shadow: 0 0 0 3px rgba(59,130,246,0.2);
+    }
+
+    /* ===== PENDING BOX ===== */
     .pendingBox {
       margin-top: 15px;
-      padding: 10px;
+      padding: 12px;
       border: 1px dashed #fbbf24;
-      border-radius: 10px;
+      border-radius: 12px;
+      background: rgba(250,204,21,0.05);
     }
 
-    .meta {
-      margin-bottom: 15px;
-      padding-bottom: 10px;
-      border-bottom: 1px solid #374151;
-    }
-
-    .rating {
-      color: #fbbf24;
-      font-weight: bold;
+    /* ===== INTENSITY BADGE ===== */
+    .badge {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 700;
+      border: 1px solid rgba(255,255,255,0.12);
+      background: rgba(255,255,255,0.05);
     }
   </style>
 </head>
