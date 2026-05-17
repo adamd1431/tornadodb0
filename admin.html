@@ -123,25 +123,25 @@ let view = "tornadoes";
 async function loadSummaries() {
   view = "summaries";
 
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from("summary_submissions")
-    .select("id, summary_text, tornado_id, tornadoes(name)")
+    .select("*")
     .eq("status", "pending");
 
-  const safe = data || [];
+  console.log("summaries:", data);
+  console.log("error:", error);
 
   document.getElementById("panel").innerHTML =
-    safe.length
-      ? safe.map(s => `
+    data && data.length
+      ? data.map(s => `
         <div class="card">
-          <p><b>Tornado ID:</b> ${s.tornado_id || "Unknown"}</p>
+          <p><b>Tornado ID:</b> ${s.tornado_id}</p>
           <p>${s.summary_text}</p>
-
-          <button onclick="approveSummarySubmission('${s.id}', '${s.tornado_id}', ${JSON.stringify(
-            JSON.stringify(s.summary_text)
-          )})">
-            Approve
-          </button>
+          <button onclick='approveSummarySubmission(
+            "${s.id}",
+            "${s.tornado_id}",
+            ${JSON.stringify(JSON.stringify(s.summary_text))}
+          )'>Approve</button>
         </div>
       `).join("")
       : "<p>No pending summaries.</p>";
