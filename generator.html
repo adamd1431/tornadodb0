@@ -259,6 +259,8 @@ input[type=color]{width:36px;height:32px;border-radius:6px;border:1px solid var(
 .top100-frame-toggle{margin:0 4px 0 0;align-self:center}
 .top100-estimate-label-control{display:flex;align-items:center;gap:7px;margin:0 4px 0 0;color:var(--muted);font-size:12px;white-space:nowrap}
 .top100-estimate-label-control input{width:150px;margin:0;padding:7px 9px}
+.top30-export-control{display:inline-flex;align-items:center;gap:7px;margin:0 4px 0 0;padding:5px 8px;border:1px solid var(--border-hover);border-radius:8px;background:rgba(255,255,255,.03);color:var(--muted);font-size:12px;font-weight:800;white-space:nowrap}
+.top30-export-control input{width:58px;margin:0;padding:7px 9px;text-align:center;font-weight:800}
 .top100-row.empty{border-style:dashed;opacity:.82}
 .top100-row.empty .top100-row-rank{color:var(--muted2)!important}
 .top100-empty-name{font-weight:750;color:var(--muted)}
@@ -770,6 +772,10 @@ body.top100-generator-mode #top100-status.top100-only{display:block!important}
           <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
           Top 100
         </button>
+        <button class="btn top100-only" id="top30-quick-btn" onclick="generateTop30Set()">
+          <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>
+          <span id="top30-quick-label">Top 30</span>
+        </button>
         <button class="btn top100-only" id="top100-test-btn" onclick="generateTop100TestSlide()">
           <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><path d="M7 7h.01M18 7h.01M7 18h.01M18 18h.01"/></svg>
           Test 4-1
@@ -826,6 +832,11 @@ body.top100-generator-mode #top100-status.top100-only{display:block!important}
           <span>Estimate label</span>
           <input type="text" id="top100-estimate-label" value="Estimate:" oninput="queueTop100Preview()" aria-label="Estimate label text">
         </label>
+        <label class="top30-export-control" for="top30-count">
+          <span>Top</span>
+          <input type="number" id="top30-count" value="30" min="1" max="30" step="1" oninput="syncTop30ButtonLabel()" onchange="syncTop30ButtonLabel(true)" onkeydown="onTop30CountKeydown(event)" aria-label="Top 30 slide count">
+        </label>
+        <button class="btn" id="top30-export-btn" onclick="generateTop30Set()">Export Top 30</button>
         <button class="btn btn-primary" id="top100-export-btn" onclick="generateTop100Set()">Export ZIP</button>
         <button class="btn" onclick="closeTop100Editor()">Close</button>
       </div>
@@ -906,6 +917,7 @@ const TOP100_SLIDE_GUTTER = 12;
 const TOP100_SLIDE_RADIUS = 34;
 const TOP100_SLIDE_MIN_GUTTER = 12;
 const TOP100_SLIDE_MAX_GUTTER = 34;
+const TOP30_MAX_COUNT = 30;
 const GENERATOR_PARAMS = new URLSearchParams(window.location.search);
 const IS_TOP100_GENERATOR = GENERATOR_PARAMS.get('top100') === '1' || GENERATOR_PARAMS.get('mode') === 'top100';
 const IS_USER_LIST_GENERATOR = GENERATOR_PARAMS.get('mode') === 'list' || GENERATOR_PARAMS.has('list') || GENERATOR_PARAMS.has('list_id');
@@ -4191,6 +4203,55 @@ function getTop100ExportChunks(byRank = top100RankMap) {
   return chunks;
 }
 
+function normalizeTop30Count(value, fallback = TOP30_MAX_COUNT) {
+  const parsed = Number.parseInt(value, 10);
+  const next = Number.isFinite(parsed) ? parsed : fallback;
+  return Math.min(TOP30_MAX_COUNT, Math.max(1, next));
+}
+
+function getTop30RequestedCount({ syncInput = true } = {}) {
+  const input = document.getElementById('top30-count');
+  const count = normalizeTop30Count(input?.value, TOP30_MAX_COUNT);
+  if (syncInput && input) input.value = String(count);
+  return count;
+}
+
+function syncTop30ButtonLabel(syncInput = false) {
+  const count = getTop30RequestedCount({ syncInput });
+  const btn = document.getElementById('top30-export-btn');
+  if (btn) btn.textContent = `Export Top ${count}`;
+  const quickLabel = document.getElementById('top30-quick-label');
+  if (quickLabel) quickLabel.textContent = `Top ${count}`;
+}
+
+function onTop30CountKeydown(event) {
+  if (event.key !== 'Enter') return;
+  event.preventDefault();
+  syncTop30ButtonLabel(true);
+  generateTop30Set();
+}
+
+function getTop30ExportLimit(byRank = top100RankMap, requestedCount = TOP30_MAX_COUNT) {
+  const requested = normalizeTop30Count(requestedCount, TOP30_MAX_COUNT);
+  const highest = getHighestCompleteTop100Rank(byRank);
+  return Math.min(TOP30_MAX_COUNT, requested, highest);
+}
+
+function getTop30ExportRanks(byRank = top100RankMap, requestedCount = TOP30_MAX_COUNT) {
+  const limit = getTop30ExportLimit(byRank, requestedCount);
+  return Array.from({ length: limit }, (_, i) => limit - i)
+    .filter(rank => byRank?.has(rank));
+}
+
+function setTop30ExportControlsDisabled(disabled) {
+  ['top30-export-btn', 'top30-quick-btn'].forEach(id => {
+    const btn = document.getElementById(id);
+    if (btn) btn.disabled = disabled;
+  });
+  const input = document.getElementById('top30-count');
+  if (input) input.disabled = disabled;
+}
+
 function isTop100FancyFrameEnabled() {
   const el = document.getElementById('top100-frame-on');
   return !el || el.checked;
@@ -4568,6 +4629,7 @@ function updateTop100EditorChrome() {
   if (search) search.placeholder = isUserList ? 'Search ranks or tornado names in this list' : 'Search ranks or tornado names';
   if (addBtn) addBtn.style.display = isUserList ? 'none' : '';
   if (exportBtn) exportBtn.textContent = isUserList ? 'Export List ZIP' : 'Export ZIP';
+  syncTop30ButtonLabel(true);
 }
 
 async function fetchTop100EditorData() {
@@ -4859,8 +4921,9 @@ async function openTop100Editor() {
     updateTop100EditorChrome();
     renderTop100Editor();
     const chunks = getTop100ExportChunks(top100RankMap).length;
+    const top30Ready = getTop30ExportLimit(top100RankMap, TOP30_MAX_COUNT);
     setTop100Status(IS_USER_LIST_GENERATOR
-      ? `${top100ListContext.title || 'List'} loaded. ${chunks ? `${chunks} full slide${chunks === 1 ? '' : 's'} ready.` : 'Add at least 4 tornadoes to export slides.'}`
+      ? `${top100ListContext.title || 'List'} loaded. ${chunks ? `${chunks} four-up slide${chunks === 1 ? '' : 's'} ready.` : 'No four-up slides yet.'} ${top30Ready ? `Top ${top30Ready} one-per-slide ready.` : 'Add at least 1 tornado to export Top 30 slides.'}`
       : 'Top 100 loaded. Add, move, rename, or swap pictures, then export the ZIP.',
       'ok');
   } catch (error) {
@@ -6142,6 +6205,77 @@ function drawTop100Slide(canvas, tornadoes, imagesById, options = {}) {
 
 }
 
+function getTop30SlideLayout() {
+  const gridOffset = Math.round((TOP100_CANVAS_SIZE - TOP100_GRID_SIZE) / 2);
+  const margin = TOP100_SLIDE_MARGIN;
+  const x = gridOffset + margin;
+  const y = gridOffset + margin;
+  return {
+    x,
+    y,
+    size: TOP100_GRID_SIZE - margin * 2,
+    radius: TOP100_SLIDE_RADIUS
+  };
+}
+
+function drawTop30Slide(canvas, tornado, imageInfo, options = {}) {
+  canvas.width = TOP100_CANVAS_SIZE;
+  canvas.height = TOP100_CANVAS_SIZE;
+  updateMainCanvasDisplay(TOP100_CANVAS_SIZE, TOP100_CANVAS_SIZE);
+
+  const ctx = canvas.getContext('2d');
+  const layout = getTop30SlideLayout();
+  const blackOpacity = getBlackOverlayOpacity();
+
+  ctx.clearRect(0, 0, TOP100_CANVAS_SIZE, TOP100_CANVAS_SIZE);
+  drawTop100SlideBackground(ctx, TOP100_CANVAS_SIZE);
+  if (options.fancyFrame !== false) {
+    drawTop100SlideAuraFrame(ctx, 0, 0, TOP100_CANVAS_SIZE, TOP100_CANVAS_SIZE);
+  }
+
+  drawTop100CardFrame(
+    ctx,
+    layout.x,
+    layout.y,
+    layout.size,
+    layout.size,
+    layout.radius,
+    getTop100RankColor(tornado.opinion_rank)
+  );
+
+  ctx.save();
+  roundRect(ctx, layout.x, layout.y, layout.size, layout.size, layout.radius);
+  ctx.clip();
+  ctx.filter = 'contrast(1.12) saturate(0.84) sepia(0.10) brightness(1.02)';
+  drawTop100Image(ctx, imageInfo, layout.x, layout.y, layout.size, layout.size);
+  ctx.filter = 'none';
+  drawTop100PhotoFilter(ctx, layout.x, layout.y, layout.size, layout.size, Number(tornado.opinion_rank || 1));
+  if (blackOpacity > 0) {
+    ctx.fillStyle = `rgba(0,0,0,${blackOpacity})`;
+    ctx.fillRect(layout.x, layout.y, layout.size, layout.size);
+  }
+  drawTop100CellShade(ctx, layout.x, layout.y, layout.size, layout.size);
+  drawTop100AuraOverlay(ctx, layout.x, layout.y, layout.size, layout.size, tornado.opinion_rank);
+  ctx.restore();
+
+  ctx.save();
+  roundRect(ctx, layout.x, layout.y, layout.size, layout.size, layout.radius);
+  ctx.clip();
+  drawTop100Label(ctx, tornado, layout.x, layout.y, layout.size, layout.size);
+  drawTop100Estimate(ctx, tornado, layout.x, layout.y, layout.size, layout.size);
+  ctx.restore();
+
+  drawTop100CardBorder(
+    ctx,
+    layout.x,
+    layout.y,
+    layout.size,
+    layout.size,
+    layout.radius,
+    getTop100RankColor(tornado.opinion_rank)
+  );
+}
+
 async function getTop100ImageInfo(tornado) {
   const rank = Number(tornado.opinion_rank);
   const choice = top100ImageChoices.get(rank);
@@ -6266,6 +6400,69 @@ function getTop100ExportBaseName() {
     : 'top100';
 }
 
+function getTop30ExportBaseName(rankLimit) {
+  const countLabel = String(rankLimit || TOP30_MAX_COUNT).padStart(2, '0');
+  return isUserTop100ListMode()
+    ? `${slugifyTop100Filename(top100ListContext.title, 'user-list')}-top${countLabel}`
+    : `top${countLabel}`;
+}
+
+async function generateTop30Set() {
+  try {
+    setTop30ExportControlsDisabled(true);
+    const requestedCount = getTop30RequestedCount();
+    setTop100Status(`Checking top ${requestedCount}...`);
+    await loadTop100LabelFont();
+    await loadTop100EstimateSettings();
+
+    const byRank = top100RankMap || (IS_USER_LIST_GENERATOR ? await fetchUserTop100ListData() : await fetchTop100RankMap());
+    top100RankMap = byRank;
+    const ranks = getTop30ExportRanks(byRank, requestedCount);
+    if (!ranks.length) {
+      throw new Error('Add at least 1 ranked tornado before exporting Top 30 slides.');
+    }
+
+    const rankLimit = ranks[0];
+    const canvas = document.createElement('canvas');
+    const files = [];
+    const baseName = getTop30ExportBaseName(rankLimit);
+    const fancyFrame = isTop100FancyFrameEnabled();
+    let firstTornado = null;
+    let firstImage = null;
+
+    for (let index = 0; index < ranks.length; index++) {
+      const rank = ranks[index];
+      const tornado = getTop100ExportTornado(rank, byRank.get(rank));
+      if (!firstTornado) firstTornado = tornado;
+
+      setTop100Status(`Building Top ${rankLimit} slide ${index + 1}/${ranks.length}...`);
+      const imageInfo = await getTop100ImageInfo(tornado);
+      if (index === 0) firstImage = imageInfo;
+
+      drawTop30Slide(canvas, tornado, imageInfo, { fancyFrame });
+      const blob = await canvasToPngBlob(canvas);
+      files.push({ name: `${baseName}-${String(rank).padStart(3, '0')}.png`, blob });
+    }
+
+    setTop100Status('Packing ZIP...');
+    const zip = await buildZip(files);
+    downloadBlob(zip, `${baseName}-slides.zip`);
+
+    if (firstTornado) {
+      drawTop30Slide(document.getElementById('main-canvas'), firstTornado, firstImage, { fancyFrame });
+    }
+    setTop100Status(`Top ${rankLimit} one-per-slide ZIP downloaded.`, 'ok');
+  } catch (error) {
+    console.error(error);
+    const message = error && error.message ? error.message : 'Could not build the Top 30 slides.';
+    setTop100Status(message, 'error');
+    alert(message);
+  } finally {
+    setTop30ExportControlsDisabled(false);
+    syncTop30ButtonLabel(true);
+  }
+}
+
 async function generateTop100Set() {
   const btn = document.getElementById('top100-btn');
   const exportBtn = document.getElementById('top100-export-btn');
@@ -6383,7 +6580,7 @@ Object.assign(window,{
   triggerUpload,handleUpload,clearSlot,onZoom,
   schedRender,onLayoutInput,onTextPlacementInput,onTextLayoutInput,onFontFaceChange,applyOneRatioPreset,toggleHighlightUI,toggleShadowUI,toggleCircleGradientUI,toggleBlackOpacityUI,toggleStrokeUI,
   applySelectedPreset,saveCurrentPreset,deleteSelectedPreset,
-  syncColorFromHex,syncHighlightHex,syncShadowHex,syncStrokeHex,downloadImg,generateTop100Set,generateTop100TestSlide,
+  syncColorFromHex,syncHighlightHex,syncShadowHex,syncStrokeHex,downloadImg,generateTop100Set,generateTop30Set,generateTop100TestSlide,syncTop30ButtonLabel,onTop30CountKeydown,
   openTop100Editor,closeTop100Editor,closeTop100IfBg,queueTop100Preview,openTop100Database,triggerTop100Upload,handleTop100Upload,resetTop100Image,
   setTop100RankName,resetTop100Name,setTop100RankDate,resetTop100Date,setTop100RankRating,resetTop100Rating,setTop100RankEstimate,resetTop100Estimate,openTop100TornadoPicker,assignTop100RankFromModal,clearTop100Rank,moveTop100Rank,renderTop100Editor,
   openTextFullscreen,closeTextFullscreen,closeTextFullscreenIfBg,onFullscreenTextInput,onFullscreenTextKeydown,syncFullscreenFont,syncFullscreenFontSize,syncFullscreenColor,syncFullscreenHex,
