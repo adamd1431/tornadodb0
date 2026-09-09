@@ -776,6 +776,10 @@ body.top100-generator-mode #top100-status.top100-only{display:block!important}
           <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>
           <span id="top30-quick-label">Top 30</span>
         </button>
+        <button class="btn top100-only" id="top30-test-btn" onclick="generateTop30TestSlide()">
+          <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/><path d="M17 17h.01"/></svg>
+          <span id="top30-test-label">Test Top 30</span>
+        </button>
         <button class="btn top100-only" id="top100-test-btn" onclick="generateTop100TestSlide()">
           <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><path d="M7 7h.01M18 7h.01M7 18h.01M18 18h.01"/></svg>
           Test 4-1
@@ -4222,6 +4226,8 @@ function syncTop30ButtonLabel(syncInput = false) {
   if (btn) btn.textContent = `Export Top ${count}`;
   const quickLabel = document.getElementById('top30-quick-label');
   if (quickLabel) quickLabel.textContent = `Top ${count}`;
+  const testLabel = document.getElementById('top30-test-label');
+  if (testLabel) testLabel.textContent = `Test Top ${count}`;
 }
 
 function onTop30CountKeydown(event) {
@@ -4244,7 +4250,7 @@ function getTop30ExportRanks(byRank = top100RankMap, requestedCount = TOP30_MAX_
 }
 
 function setTop30ExportControlsDisabled(disabled) {
-  ['top30-export-btn', 'top30-quick-btn'].forEach(id => {
+  ['top30-export-btn', 'top30-quick-btn', 'top30-test-btn'].forEach(id => {
     const btn = document.getElementById(id);
     if (btn) btn.disabled = disabled;
   });
@@ -6463,6 +6469,38 @@ async function generateTop30Set() {
   }
 }
 
+async function generateTop30TestSlide() {
+  try {
+    setTop30ExportControlsDisabled(true);
+    const requestedCount = getTop30RequestedCount();
+    setTop100Status(`Building Top ${requestedCount} test slide...`);
+    await loadTop100LabelFont();
+    await loadTop100EstimateSettings();
+
+    const byRank = top100RankMap || (IS_USER_LIST_GENERATOR ? await fetchUserTop100ListData() : await fetchTop100RankMap());
+    top100RankMap = byRank;
+    const ranks = getTop30ExportRanks(byRank, requestedCount);
+    if (!ranks.length) {
+      throw new Error('Add at least 1 ranked tornado before previewing a Top 30 slide.');
+    }
+
+    const rankLimit = ranks[0];
+    const rank = ranks[0];
+    const tornado = getTop100ExportTornado(rank, byRank.get(rank));
+    const imageInfo = await getTop100ImageInfo(tornado);
+    drawTop30Slide(document.getElementById('main-canvas'), tornado, imageInfo, { fancyFrame: isTop100FancyFrameEnabled() });
+    setTop100Status(`Top ${rankLimit} test slide preview ready: #${rank}.`, 'ok');
+  } catch (error) {
+    console.error(error);
+    const message = error && error.message ? error.message : 'Could not build the Top 30 test slide.';
+    setTop100Status(message, 'error');
+    alert(message);
+  } finally {
+    setTop30ExportControlsDisabled(false);
+    syncTop30ButtonLabel(true);
+  }
+}
+
 async function generateTop100Set() {
   const btn = document.getElementById('top100-btn');
   const exportBtn = document.getElementById('top100-export-btn');
@@ -6580,7 +6618,7 @@ Object.assign(window,{
   triggerUpload,handleUpload,clearSlot,onZoom,
   schedRender,onLayoutInput,onTextPlacementInput,onTextLayoutInput,onFontFaceChange,applyOneRatioPreset,toggleHighlightUI,toggleShadowUI,toggleCircleGradientUI,toggleBlackOpacityUI,toggleStrokeUI,
   applySelectedPreset,saveCurrentPreset,deleteSelectedPreset,
-  syncColorFromHex,syncHighlightHex,syncShadowHex,syncStrokeHex,downloadImg,generateTop100Set,generateTop30Set,generateTop100TestSlide,syncTop30ButtonLabel,onTop30CountKeydown,
+  syncColorFromHex,syncHighlightHex,syncShadowHex,syncStrokeHex,downloadImg,generateTop100Set,generateTop30Set,generateTop30TestSlide,generateTop100TestSlide,syncTop30ButtonLabel,onTop30CountKeydown,
   openTop100Editor,closeTop100Editor,closeTop100IfBg,queueTop100Preview,openTop100Database,triggerTop100Upload,handleTop100Upload,resetTop100Image,
   setTop100RankName,resetTop100Name,setTop100RankDate,resetTop100Date,setTop100RankRating,resetTop100Rating,setTop100RankEstimate,resetTop100Estimate,openTop100TornadoPicker,assignTop100RankFromModal,clearTop100Rank,moveTop100Rank,renderTop100Editor,
   openTextFullscreen,closeTextFullscreen,closeTextFullscreenIfBg,onFullscreenTextInput,onFullscreenTextKeydown,syncFullscreenFont,syncFullscreenFontSize,syncFullscreenColor,syncFullscreenHex,
